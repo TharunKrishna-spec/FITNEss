@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Menu, X, Zap, ShieldCheck, LogOut } from 'lucide-react';
 import { INITIAL_PROFILES, INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from './constants';
 import { Profile, Event, Achievement } from './types';
@@ -19,35 +18,53 @@ import LoginPage from './components/LoginPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsOfServicePage from './components/TermsOfServicePage';
 
-const NavLink = ({ to, children, icon: Icon, onClick }: any) => {
+const NavLink = ({ to, children, icon: Icon, onClick, scrolled, index }: any) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   
   return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
-        isActive 
-          ? 'text-emerald-400 bg-emerald-500/5' 
-          : 'text-slate-400 hover:text-white hover:bg-white/5'
-      }`}
+    <motion.div
+      initial={false}
+      animate={{ 
+        y: scrolled ? 0 : 4,
+        scale: scrolled ? 1 : 0.98,
+        opacity: 1
+      }}
+      transition={{ 
+        type: 'spring', 
+        stiffness: 400, 
+        damping: 30, 
+        delay: scrolled ? index * 0.02 : 0 
+      }}
     >
-      {Icon && <Icon size={14} />}
-      <span className="uppercase tracking-[0.2em] text-[9px] font-black">{children}</span>
-      {isActive && (
-        <motion.div 
-          layoutId="nav-underline"
-          className="absolute -bottom-1 left-4 right-4 h-0.5 bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981]" 
-        />
-      )}
-    </Link>
+      <Link
+        to={to}
+        onClick={onClick}
+        className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+          isActive 
+            ? 'text-emerald-400 bg-emerald-500/5' 
+            : 'text-slate-400 hover:text-white hover:bg-white/5'
+        }`}
+      >
+        {Icon && <Icon size={14} />}
+        <span className="uppercase tracking-[0.2em] text-[9px] font-black">{children}</span>
+        {isActive && (
+          <motion.div 
+            layoutId="nav-underline"
+            className="absolute -bottom-1 left-4 right-4 h-0.5 bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981]" 
+          />
+        )}
+      </Link>
+    </motion.div>
   );
 };
 
 const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) => {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  
+  // Parallax effect for header background elements
+  const bgShift = useTransform(scrollYProgress, [0, 0.2], [0, -20]);
 
   return (
     <motion.header 
@@ -63,29 +80,45 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) =>
             borderColor: scrolled ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0)',
             borderRadius: scrolled ? '24px' : '0px',
             scale: scrolled ? 0.98 : 1,
+            y: scrolled ? 4 : 0,
           }}
-          className="flex items-center justify-between py-3 px-6 border border-transparent relative overflow-hidden group"
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="flex items-center justify-between py-3 px-6 border border-transparent relative overflow-hidden group shadow-2xl"
         >
+          {/* Subtle parallax background glow */}
+          <motion.div 
+            style={{ y: bgShift }}
+            className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 blur-[60px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+          />
+
           <motion.div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-emerald-500 origin-center z-20 opacity-40" style={{ scaleX }} />
 
-          <Link to="/" className="flex items-center space-x-3 z-50" onClick={() => setIsMenuOpen(false)}>
-            <div className="p-2 bg-emerald-500 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-              <Zap className="text-black" size={18} fill="currentColor" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
-              <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
-            </div>
-          </Link>
+          <motion.div
+            animate={{ 
+              scale: scrolled ? 1.05 : 1,
+              y: scrolled ? 0 : 2
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          >
+            <Link to="/" className="flex items-center space-x-3 z-50" onClick={() => setIsMenuOpen(false)}>
+              <div className="p-2 bg-emerald-500 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                <Zap className="text-black" size={18} fill="currentColor" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
+                <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
+              </div>
+            </Link>
+          </motion.div>
 
           <nav className="hidden lg:flex items-center space-x-1">
-            <NavLink to="/">Home</NavLink>
-            <NavLink to="/team">Leadership</NavLink>
-            <NavLink to="/timeline">Events</NavLink>
-            <NavLink to="/hall-of-fame">Hall of Fame</NavLink>
-            <NavLink to="/calculator">Calculator</NavLink>
-            <NavLink to="/contact">Join Us</NavLink>
-            {user && <NavLink to="/admin" icon={ShieldCheck}>Admin</NavLink>}
+            <NavLink to="/" scrolled={scrolled} index={0}>Home</NavLink>
+            <NavLink to="/team" scrolled={scrolled} index={1}>Leadership</NavLink>
+            <NavLink to="/timeline" scrolled={scrolled} index={2}>Events</NavLink>
+            <NavLink to="/hall-of-fame" scrolled={scrolled} index={3}>Hall of Fame</NavLink>
+            <NavLink to="/calculator" scrolled={scrolled} index={4}>Calculator</NavLink>
+            <NavLink to="/contact" scrolled={scrolled} index={5}>Join Us</NavLink>
+            {user && <NavLink to="/admin" icon={ShieldCheck} scrolled={scrolled} index={6}>Admin</NavLink>}
           </nav>
 
           <div className="flex items-center space-x-4 z-50">
