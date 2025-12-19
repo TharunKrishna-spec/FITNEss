@@ -56,7 +56,7 @@ export const INITIAL_EVENTS: Event[] = [
   },
   {
     id: 'e-mega',
-    title: 'Titans Night: Under the Lights',
+    title: 'Elite Night: Under the Lights',
     date: '2024-05-20',
     description: 'A night-time fitness festival featuring neon workouts, DJ sets, and maximum-rep challenges.',
     status: EventStatus.UPCOMING,
@@ -66,7 +66,7 @@ export const INITIAL_EVENTS: Event[] = [
     id: 'e2',
     title: 'Freshers Induction Cycle',
     date: '2024-03-10',
-    description: 'Welcoming the new batch of Titans. Core team recruitments and fitness assessments.',
+    description: 'Welcoming the new batch of members. Core team recruitments and fitness assessments.',
     status: EventStatus.ONGOING,
     banner: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200'
   },

@@ -155,7 +155,7 @@ const HallOfFamePage: React.FC<Props> = ({ hallOfFame }) => {
               </div>
               <h3 className="text-5xl font-black uppercase tracking-tighter mb-6">READY FOR THE PODIUM?</h3>
               <p className="text-slate-500 text-lg font-medium mb-10 leading-relaxed">
-                The next official event is just around the corner. Train hard, stay disciplined, and your name might just be etched into the Titan Archives.
+                The next official event is just around the corner. Train hard, stay disciplined, and your name might just be etched into the Club Archives.
               </p>
               <button className="px-12 py-5 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all">
                 Check Upcoming Events

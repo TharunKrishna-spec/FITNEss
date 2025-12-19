@@ -28,7 +28,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ recruitmentLink }) => {
             </div>
             
             <h1 className="text-6xl md:text-[8rem] font-black uppercase tracking-tighter leading-[0.85] mb-10 italic">
-              JOIN THE <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.15)' }}>TITANS.</span>
+              JOIN THE <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.15)' }}>CLUB.</span>
             </h1>
             
             <p className="text-slate-400 text-xl font-medium mb-16 max-w-xl leading-relaxed opacity-80">

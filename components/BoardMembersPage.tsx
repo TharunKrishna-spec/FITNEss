@@ -68,7 +68,7 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-8 leading-[0.8] italic"
           >
-            THE <br /><span className="text-transparent" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.15)' }}>TITANS.</span>
+            THE <br /><span className="text-transparent" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.15)' }}>BOARD.</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}

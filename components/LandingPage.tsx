@@ -25,7 +25,7 @@ const DEPARTMENTS = [
     id: 'MEDIA',
     name: 'Media & Design',
     icon: Camera,
-    desc: 'The creative pulse. Documenting the raw intensity of Titan training and designing our official club aesthetic.',
+    desc: 'The creative pulse. Documenting the raw intensity of elite training and designing our official club aesthetic.',
     color: 'from-blue-500 to-indigo-600',
     glow: 'rgba(59, 130, 246, 0.3)',
     img: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800'
@@ -43,7 +43,7 @@ const DEPARTMENTS = [
     id: 'PR',
     name: 'Outreach & PR',
     icon: Megaphone,
-    desc: 'The voice of the Titans. Managing public relations, campus collaborations, and official brand growth.',
+    desc: 'The voice of the members. Managing public relations, campus collaborations, and official brand growth.',
     color: 'from-red-500 to-orange-600',
     glow: 'rgba(239, 68, 68, 0.3)',
     img: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=800'
@@ -136,13 +136,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
               </h1>
               
               <p className="text-lg md:text-xl text-slate-400 max-w-xl mb-12 font-medium leading-relaxed mt-6">
-                Representing the athletic pulse of VIT Chennai. We empower students to achieve professional-grade fitness results through community and discipline.
+                Representing the athletic pulse of VIT Chennai. We empower students to achieve professional-grade results through community and discipline.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-6">
                 <Link to="/contact" className="group relative px-12 py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-tight transition-all hover:scale-105 shadow-[0_20px_40px_rgba(16,185,129,0.2)]">
                   <span className="relative z-10 flex items-center justify-center">
-                    Join the Titans <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+                    Join the Club <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
                   </span>
                 </Link>
                 <button 
@@ -166,7 +166,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
                   <div className="absolute bottom-12 left-12">
                     <p className="text-emerald-500 font-black text-xs uppercase tracking-[0.4em] mb-2">Campus Athleticism</p>
-                    <h3 className="text-4xl font-black uppercase tracking-tighter italic text-white">TITAN ELITE</h3>
+                    <h3 className="text-4xl font-black uppercase tracking-tighter italic text-white">CLUB ELITE</h3>
                   </div>
                 </div>
               </div>
@@ -186,7 +186,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
         </motion.div>
       </section>
 
-      {/* Upcoming Events Section - NEW */}
+      {/* Upcoming Events Section */}
       <section id="upcoming" className="py-48 relative overflow-hidden bg-slate-950/80">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">

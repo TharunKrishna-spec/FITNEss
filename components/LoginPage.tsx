@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Lock, Mail, Loader2, ArrowRight, Zap } from 'lucide-react';
@@ -122,7 +123,7 @@ const LoginPage: React.FC<Props> = ({ onLogin }) => {
           <div className="mt-10 pt-8 border-t border-white/5 text-center">
             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-relaxed">
               Connection encrypted with <br />
-              <span className="text-emerald-500/50 italic font-black">Titan Security Protocol v4.0</span>
+              <span className="text-emerald-500/50 italic font-black">Club Security Protocol v4.0</span>
             </p>
           </div>
         </div>

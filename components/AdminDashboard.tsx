@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Role, Profile, Event, EventStatus, Achievement, PodiumPosition } from '../types';
 import { LayoutDashboard, Users, Calendar, Trophy, Plus, Trash2, Edit2, ShieldCheck, Settings, Save, X, Loader2, Link as LinkIcon } from 'lucide-react';
@@ -54,7 +55,6 @@ const AdminDashboard: React.FC<Props> = ({
     try {
       let payload: any = { ...rawData };
       
-      // Handle special fields
       if (editingItem.type === 'profile') {
         payload.socials = {
           linkedin: rawData.linkedin || '',
@@ -62,7 +62,6 @@ const AdminDashboard: React.FC<Props> = ({
         };
         delete payload.linkedin;
         delete payload.instagram;
-        // Simple achievements parsing
         payload.achievements = rawData.achievements ? (rawData.achievements as string).split(',').map(s => s.trim()) : [];
       }
 
@@ -118,14 +117,15 @@ const AdminDashboard: React.FC<Props> = ({
   );
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-950 pt-24 lg:pt-0">
-      <aside className="w-full lg:w-80 bg-slate-900/10 border-r border-white/5 p-8 lg:fixed lg:top-0 lg:bottom-0 overflow-y-auto">
-        <div className="mb-12 hidden lg:block">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-950 pt-28">
+      {/* Sidebar - Positioned below fixed header height */}
+      <aside className="w-full lg:w-80 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5 p-8 lg:fixed lg:top-24 lg:bottom-0 overflow-y-auto no-scrollbar">
+        <div className="mb-8 hidden lg:block">
            <div className="flex items-center space-x-3 mb-2">
              <div className="p-2 bg-emerald-500 rounded-lg">
                <ShieldCheck size={20} className="text-black" fill="currentColor" />
              </div>
-             <span className="text-xl font-black tracking-tighter uppercase italic">TITAN<span className="text-emerald-500">CORE</span></span>
+             <span className="text-xl font-black tracking-tighter uppercase italic">CLUB<span className="text-emerald-500">CORE</span></span>
            </div>
            <p className="text-[8px] text-slate-600 font-black uppercase tracking-[0.3em] ml-1">Cloud Sync Active</p>
         </div>
@@ -139,148 +139,157 @@ const AdminDashboard: React.FC<Props> = ({
         </nav>
       </aside>
 
-      <div className="flex-grow lg:ml-80 p-8 lg:p-16 max-w-7xl mx-auto w-full">
-        {activeTab === 'overview' && (
-          <div className="space-y-12">
-            <div>
-               <h2 className="text-5xl font-black uppercase tracking-tighter mb-2 italic">Operation Center</h2>
-               <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Connected to Supabase Cloud</p>
-            </div>
+      {/* Main Content Area */}
+      <div className="flex-grow lg:ml-80 p-8 lg:p-12 xl:p-16 w-full overflow-x-hidden">
+        <div className="max-w-6xl mx-auto">
+          {activeTab === 'overview' && (
+            <div className="space-y-12">
+              <div>
+                <h2 className="text-5xl font-black uppercase tracking-tighter mb-2 italic">Operation Center</h2>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Supabase Integrated Backend</p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-               {[
-                 { label: 'Team Members', value: profiles.length, color: 'text-emerald-500' },
-                 { label: 'Total Events', value: events.length, color: 'text-blue-500' },
-                 { label: 'Hall Records', value: hallOfFame.length, color: 'text-yellow-500' },
-                 { label: 'Recruitment', value: 'Live', color: 'text-purple-500' }
-               ].map((stat, i) => (
-                  <div key={i} className="glass-card p-8 rounded-[32px] border-white/5">
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{stat.label}</p>
-                     <p className={`text-4xl font-black ${stat.color}`}>{stat.value}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { label: 'Team Members', value: profiles.length, color: 'text-emerald-500' },
+                  { label: 'Total Events', value: events.length, color: 'text-blue-500' },
+                  { label: 'Hall Records', value: hallOfFame.length, color: 'text-yellow-500' },
+                  { label: 'Recruitment', value: 'Live', color: 'text-purple-500' }
+                ].map((stat, i) => (
+                    <div key={i} className="glass-card p-8 rounded-[32px] border-white/5 bg-slate-900/20 hover:bg-slate-900/40 transition-colors">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{stat.label}</p>
+                      <p className={`text-4xl font-black ${stat.color}`}>{stat.value}</p>
+                    </div>
+                ))}
+              </div>
+
+              <div className="glass-card p-10 rounded-[40px] border-white/5 bg-slate-900/20">
+                <h3 className="text-xl font-black uppercase tracking-tighter mb-10 italic">Quick Create</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button onClick={() => setEditingItem({ type: 'event', data: {} })} className="flex items-center justify-between p-6 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest">
+                      <span>Add Event</span> <Plus size={16} />
+                  </button>
+                  <button onClick={() => setEditingItem({ type: 'profile', data: {} })} className="flex items-center justify-between p-6 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest">
+                      <span>Add Member</span> <Plus size={16} />
+                  </button>
+                  <button onClick={() => setEditingItem({ type: 'hall', data: {} })} className="flex items-center justify-between p-6 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest">
+                      <span>Record Victory</span> <Trophy size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'profiles' && (
+            <div className="space-y-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <h2 className="text-5xl font-black uppercase tracking-tighter italic">Team Roster</h2>
+                <button onClick={() => setEditingItem({ type: 'profile', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors">New Profile</button>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                {profiles.map(p => (
+                  <div key={p.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-emerald-500/30 transition-all bg-slate-900/20">
+                    <div className="flex items-center space-x-6">
+                      <img src={p.photo} className="w-16 h-16 rounded-[20px] object-cover bg-slate-800" alt="" />
+                      <div>
+                        <p className="text-xl font-black uppercase tracking-tighter">{p.name}</p>
+                        <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">{p.position} • {p.role}</p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button onClick={() => setEditingItem({ type: 'profile', data: p })} className="p-4 bg-white/5 rounded-2xl hover:text-emerald-500 transition-colors"><Edit2 size={16} /></button>
+                      <button onClick={() => deleteProfile(p.id)} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    </div>
                   </div>
-               ))}
-            </div>
-
-            <div className="glass-card p-10 rounded-[40px] border-white/5">
-               <h3 className="text-xl font-black uppercase tracking-tighter mb-10 italic">Quick Create</h3>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <button onClick={() => setEditingItem({ type: 'event', data: {} })} className="flex items-center justify-between p-6 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest">
-                    <span>Add Event</span> <Plus size={16} />
-                 </button>
-                 <button onClick={() => setEditingItem({ type: 'profile', data: {} })} className="flex items-center justify-between p-6 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest">
-                    <span>Add Member</span> <Plus size={16} />
-                 </button>
-                 <button onClick={() => setEditingItem({ type: 'hall', data: {} })} className="flex items-center justify-between p-6 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest">
-                    <span>Record Victory</span> <Trophy size={16} />
-                 </button>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'profiles' && (
-          <div className="space-y-8">
-            <div className="flex justify-between items-end">
-               <h2 className="text-5xl font-black uppercase tracking-tighter italic">Team Roster</h2>
-               <button onClick={() => setEditingItem({ type: 'profile', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">New Profile</button>
-            </div>
-            {profiles.map(p => (
-              <div key={p.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-emerald-500/30 transition-all">
-                <div className="flex items-center space-x-6">
-                   <img src={p.photo} className="w-16 h-16 rounded-[20px] object-cover bg-slate-800" alt="" />
-                   <div>
-                      <p className="text-xl font-black uppercase tracking-tighter">{p.name}</p>
-                      <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">{p.position} • {p.role}</p>
-                   </div>
-                </div>
-                <div className="flex space-x-2">
-                   <button onClick={() => setEditingItem({ type: 'profile', data: p })} className="p-4 bg-white/5 rounded-2xl hover:text-emerald-500 transition-colors"><Edit2 size={16} /></button>
-                   <button onClick={() => deleteProfile(p.id)} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'events' && (
-          <div className="space-y-8">
-            <div className="flex justify-between items-end">
-               <h2 className="text-5xl font-black uppercase tracking-tighter italic">Event Roadmaps</h2>
-               <button onClick={() => setEditingItem({ type: 'event', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">Create Event</button>
-            </div>
-            {events.map(e => (
-              <div key={e.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-emerald-500/30 transition-all">
-                <div className="flex items-center space-x-6">
-                   <div className="w-16 h-16 rounded-[20px] bg-slate-800 flex items-center justify-center overflow-hidden">
-                      <img src={e.banner} className="w-full h-full object-cover" alt="" />
-                   </div>
-                   <div>
-                      <p className="text-xl font-black uppercase tracking-tighter">{e.title}</p>
-                      <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{e.status} • {e.date}</p>
-                   </div>
-                </div>
-                <div className="flex space-x-2">
-                   <button onClick={() => setEditingItem({ type: 'event', data: e })} className="p-4 bg-white/5 rounded-2xl"><Edit2 size={16} /></button>
-                   <button onClick={() => deleteEvent(e.id)} className="p-4 bg-red-500/10 text-red-500 rounded-2xl"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'hall' && (
-          <div className="space-y-8">
-            <div className="flex justify-between items-end">
-               <h2 className="text-5xl font-black uppercase tracking-tighter italic">Hall of Records</h2>
-               <button onClick={() => setEditingItem({ type: 'hall', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">Record Victory</button>
-            </div>
-            {hallOfFame.map(h => (
-              <div key={h.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-yellow-500/30 transition-all">
-                <div className="flex items-center space-x-6">
-                   <div className="w-16 h-16 rounded-[20px] bg-slate-800 flex items-center justify-center overflow-hidden">
-                      <img src={h.athleteImg} className="w-full h-full object-cover" alt="" />
-                   </div>
-                   <div>
-                      <p className="text-xl font-black uppercase tracking-tighter">{h.athleteName}</p>
-                      <p className="text-yellow-500 text-[10px] font-black uppercase tracking-widest">{h.position} • {h.stat}</p>
-                   </div>
-                </div>
-                <div className="flex space-x-2">
-                   <button onClick={() => setEditingItem({ type: 'hall', data: h })} className="p-4 bg-white/5 rounded-2xl"><Edit2 size={16} /></button>
-                   <button onClick={() => deleteHallRecord(h.id)} className="p-4 bg-red-500/10 text-red-500 rounded-2xl"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="space-y-8">
-            <h2 className="text-5xl font-black uppercase tracking-tighter italic">Cloud Config</h2>
-            <div className="glass-card p-10 rounded-[40px] border-white/5">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Official Recruitment Link</label>
-              <div className="flex gap-4">
-                <div className="relative flex-grow">
-                   <LinkIcon size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" />
-                   <input type="text" value={recruitmentLink} onChange={(e) => setRecruitmentLink(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4" />
-                </div>
-                <button onClick={updateConfig} disabled={isSaving} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
-                  {isSaving && <Loader2 size={14} className="animate-spin" />} Sync Link
-                </button>
+                ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {activeTab === 'events' && (
+            <div className="space-y-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <h2 className="text-5xl font-black uppercase tracking-tighter italic">Event Control</h2>
+                <button onClick={() => setEditingItem({ type: 'event', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors">Create Event</button>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                {events.map(e => (
+                  <div key={e.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-emerald-500/30 transition-all bg-slate-900/20">
+                    <div className="flex items-center space-x-6">
+                      <div className="w-16 h-16 rounded-[20px] bg-slate-800 flex items-center justify-center overflow-hidden">
+                        <img src={e.banner} className="w-full h-full object-cover" alt="" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-black uppercase tracking-tighter">{e.title}</p>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{e.status} • {e.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button onClick={() => setEditingItem({ type: 'event', data: e })} className="p-4 bg-white/5 rounded-2xl hover:text-emerald-500 transition-colors"><Edit2 size={16} /></button>
+                      <button onClick={() => deleteEvent(e.id)} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'hall' && (
+            <div className="space-y-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <h2 className="text-5xl font-black uppercase tracking-tighter italic">Hall of Records</h2>
+                <button onClick={() => setEditingItem({ type: 'hall', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors">Record Victory</button>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                {hallOfFame.map(h => (
+                  <div key={h.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-yellow-500/30 transition-all bg-slate-900/20">
+                    <div className="flex items-center space-x-6">
+                      <div className="w-16 h-16 rounded-[20px] bg-slate-800 flex items-center justify-center overflow-hidden">
+                        <img src={h.athleteImg} className="w-full h-full object-cover" alt="" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-black uppercase tracking-tighter">{h.athleteName}</p>
+                        <p className="text-yellow-500 text-[10px] font-black uppercase tracking-widest">{h.position} • {h.stat}</p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button onClick={() => setEditingItem({ type: 'hall', data: h })} className="p-4 bg-white/5 rounded-2xl hover:text-emerald-500 transition-colors"><Edit2 size={16} /></button>
+                      <button onClick={() => deleteHallRecord(h.id)} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-8">
+              <h2 className="text-5xl font-black uppercase tracking-tighter italic">Cloud Config</h2>
+              <div className="glass-card p-10 rounded-[40px] border-white/5 bg-slate-900/20">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Official Recruitment Link</label>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-grow">
+                    <LinkIcon size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input type="text" value={recruitmentLink} onChange={(e) => setRecruitmentLink(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-emerald-500 transition-colors" />
+                  </div>
+                  <button onClick={updateConfig} disabled={isSaving} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors">
+                    {isSaving && <Loader2 size={14} className="animate-spin" />} Sync Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <AnimatePresence>
         {editingItem && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/95 backdrop-blur-3xl" onClick={() => setEditingItem(null)} />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-2xl glass-card rounded-[48px] border-white/10 p-10 overflow-y-auto max-h-[90vh]">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-2xl glass-card rounded-[48px] border-white/10 p-10 overflow-y-auto max-h-[90vh] bg-slate-900/80">
               <div className="flex justify-between items-center mb-10">
                 <h3 className="text-3xl font-black uppercase tracking-tighter">Edit {editingItem.type}</h3>
-                <button onClick={() => setEditingItem(null)} className="p-3 bg-white/5 rounded-2xl"><X size={20} /></button>
+                <button onClick={() => setEditingItem(null)} className="p-3 bg-white/5 rounded-2xl hover:text-white transition-colors"><X size={20} /></button>
               </div>
 
               <form className="space-y-6" onSubmit={handleSave}>
@@ -288,7 +297,7 @@ const AdminDashboard: React.FC<Props> = ({
                 {editingItem.type === 'event' && <EventForm data={editingItem.data} />}
                 {editingItem.type === 'hall' && <HallForm data={editingItem.data} />}
 
-                <button disabled={isSaving} type="submit" className="w-full py-5 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center space-x-3">
+                <button disabled={isSaving} type="submit" className="w-full py-5 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center space-x-3 hover:bg-emerald-400 transition-colors">
                   {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                   <span>{isSaving ? 'Synchronizing...' : 'Save to Cloud'}</span>
                 </button>
@@ -300,8 +309,6 @@ const AdminDashboard: React.FC<Props> = ({
     </div>
   );
 };
-
-// --- Specialized Form Components ---
 
 const ProfileForm = ({ data }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -347,7 +354,7 @@ const HallForm = ({ data }: any) => (
     <InputField label="Winning Stat" name="stat" defaultValue={data.stat} placeholder="e.g. 450kg Total" />
     <div className="md:col-span-2"><InputField label="Athlete Photo URL" name="athleteImg" defaultValue={data.athleteImg} /></div>
     <div className="flex items-center gap-4 py-4">
-      <input type="checkbox" name="featured" defaultChecked={data.featured} className="w-6 h-6 rounded accent-emerald-500" />
+      <input type="checkbox" name="featured" defaultChecked={data.featured} className="w-6 h-6 rounded accent-emerald-500 cursor-pointer" />
       <span className="text-xs font-black uppercase tracking-widest text-slate-400">Featured Legend</span>
     </div>
   </div>
@@ -356,14 +363,14 @@ const HallForm = ({ data }: any) => (
 const InputField = ({ label, ...props }: any) => (
   <div>
     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
-    <input {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-emerald-500 transition-colors" />
+    <input {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-emerald-500 outline-none transition-colors" />
   </div>
 );
 
 const SelectField = ({ label, children, ...props }: any) => (
   <div>
     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
-    <select {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-emerald-500 transition-colors">
+    <select {...props} className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-emerald-500 outline-none transition-colors">
       {children}
     </select>
   </div>
@@ -372,7 +379,7 @@ const SelectField = ({ label, children, ...props }: any) => (
 const TextAreaField = ({ label, ...props }: any) => (
   <div>
     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
-    <textarea {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm min-h-[100px] focus:border-emerald-500 transition-colors" />
+    <textarea {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm min-h-[100px] focus:border-emerald-500 outline-none transition-colors" />
   </div>
 );
 
