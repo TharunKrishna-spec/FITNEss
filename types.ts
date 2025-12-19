@@ -19,6 +19,7 @@ export interface Profile {
     twitter?: string;
   };
   achievements?: string[];
+  order_index?: number;
 }
 
 export enum EventStatus {
@@ -38,6 +39,7 @@ export interface Event {
   banner: string;
   gallery?: string[];
   results?: string;
+  is_featured?: boolean;
 }
 
 export enum PodiumPosition {
@@ -48,12 +50,13 @@ export enum PodiumPosition {
 
 export interface Achievement {
   id: string;
-  category: string; // e.g., "Powerlifting - 75kg", "Best Transformation"
-  eventName: string; // e.g., "VIT Campus Clash 2023"
+  category: string;
+  eventName: string;
   athleteName: string;
   athleteImg?: string;
+  athleteSocial?: string;
   position: PodiumPosition;
-  stat?: string; // e.g., "450kg Total", "15% BF Drop"
+  stat?: string;
   year: string;
   featured: boolean;
 }

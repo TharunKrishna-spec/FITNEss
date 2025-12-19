@@ -104,7 +104,15 @@ const FloatingDockDesktop = ({
       )}
     >
       {items.map((item) => (
-        <IconContainer mouseX={mouseX} key={item.title} {...item} />
+        /* Fix: Explicitly pass props to IconContainer instead of spreading 'item' to fix TypeScript key prop and type inference errors */
+        <IconContainer 
+          mouseX={mouseX} 
+          key={item.title} 
+          title={item.title}
+          icon={item.icon}
+          onClick={item.onClick}
+          active={item.active}
+        />
       ))}
     </motion.div>
   );

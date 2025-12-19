@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Role, Profile } from '../types';
-import { Linkedin, Instagram, X, ArrowUpRight, Trophy, Users, Shield, GraduationCap, Sparkles } from 'lucide-react';
+import { Linkedin, Instagram, X as XIcon, ArrowUpRight, Trophy, Users, Shield, GraduationCap, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FloatingDock } from './FloatingDock';
 
@@ -14,8 +14,8 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   const filteredProfiles = activeTab === 'All' 
-    ? profiles 
-    : profiles.filter(p => p.role === activeTab);
+    ? [...profiles].sort((a,b) => (a.order_index || 0) - (b.order_index || 0))
+    : profiles.filter(p => p.role === activeTab).sort((a,b) => (a.order_index || 0) - (b.order_index || 0));
 
   const dockItems = [
     { 
@@ -46,7 +46,6 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
 
   return (
     <div className="relative min-h-screen bg-[#020617] pb-48">
-      {/* Dynamic Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 right-[-10%] w-[60vw] h-[60vh] bg-emerald-500/[0.03] blur-[150px] rounded-full" />
         <div className="absolute bottom-0 left-[-10%] w-[60vw] h-[60vh] bg-blue-500/[0.03] blur-[150px] rounded-full" />
@@ -93,7 +92,6 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
                 onClick={() => setSelectedProfile(profile)}
                 className="group relative h-[480px] lg:h-[540px] rounded-[48px] overflow-hidden cursor-pointer bg-slate-900/50 border border-white/[0.03] hover:border-emerald-500/20 transition-all duration-700 shadow-2xl"
               >
-                {/* Background Watermark */}
                 <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none z-0">
                   <span className="text-[14rem] font-black text-white/[0.02] uppercase rotate-90 leading-none whitespace-nowrap">
                     {profile.role.toUpperCase()}
@@ -106,10 +104,8 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
                   className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.7] group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-100 transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]" 
                 />
                 
-                {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-700" />
 
-                {/* Badge */}
                 <div className="absolute top-8 left-8">
                   <div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-2xl border border-white/10 ${
                     profile.role === Role.BOARD ? 'bg-emerald-500 text-black' : 'bg-slate-900/80 text-white'
@@ -118,7 +114,6 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="absolute bottom-10 left-10 right-10 translate-y-2 group-hover:translate-y-0 transition-all duration-700">
                   <h3 className="text-3xl lg:text-4xl font-black uppercase tracking-tighter leading-[0.8] mb-4">
                     {profile.name.split(' ')[0]} <br />
@@ -128,8 +123,8 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
                   <div className="flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100">
                     <div className="h-px w-8 bg-emerald-500/30" />
                     <div className="flex space-x-3">
-                       <Instagram size={14} className="text-slate-400 hover:text-pink-500 transition-colors" />
-                       <Linkedin size={14} className="text-slate-400 hover:text-blue-500 transition-colors" />
+                       {profile.socials?.instagram && <Instagram size={14} className="text-slate-400 hover:text-pink-500 transition-colors" />}
+                       {profile.socials?.linkedin && <Linkedin size={14} className="text-slate-400 hover:text-blue-500 transition-colors" />}
                     </div>
                   </div>
                 </div>
@@ -139,14 +134,12 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
         </div>
       </div>
 
-      {/* Refined Floating Dock - Fixed at Bottom Center */}
       <div className="fixed bottom-8 left-0 right-0 z-[100] px-6 pointer-events-none">
         <div className="container mx-auto flex justify-center pointer-events-auto">
           <FloatingDock items={dockItems} />
         </div>
       </div>
 
-      {/* Cinematic Profile Modal */}
       <AnimatePresence>
         {selectedProfile && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-12 overflow-hidden">
@@ -167,7 +160,7 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
                 onClick={() => setSelectedProfile(null)}
                 className="absolute top-8 right-8 p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all z-20"
               >
-                <X size={24} />
+                <XIcon size={24} />
               </button>
               
               <div className="flex flex-col lg:flex-row h-full">
@@ -212,12 +205,16 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
                       Request Mentorship
                     </button>
                     <div className="flex space-x-2">
-                       <a href="#" className="p-5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-                          <Instagram size={20} className="text-slate-400 hover:text-white transition-colors" />
-                       </a>
-                       <a href="#" className="p-5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-                          <Linkedin size={20} className="text-slate-400 hover:text-white transition-colors" />
-                       </a>
+                       {selectedProfile.socials?.instagram && (
+                         <a href={selectedProfile.socials.instagram} target="_blank" className="p-5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
+                            <Instagram size={20} className="text-slate-400 hover:text-white transition-colors" />
+                         </a>
+                       )}
+                       {selectedProfile.socials?.linkedin && (
+                         <a href={selectedProfile.socials.linkedin} target="_blank" className="p-5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
+                            <Linkedin size={20} className="text-slate-400 hover:text-white transition-colors" />
+                         </a>
+                       )}
                     </div>
                   </div>
                 </div>

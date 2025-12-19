@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Role, Profile, Event, EventStatus, Achievement, PodiumPosition } from '../types';
-import { LayoutDashboard, Users, Calendar, Trophy, Plus, Trash2, Edit2, ShieldCheck, Settings, Save, X, Loader2, Link as LinkIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Trophy, Plus, Trash2, Edit2, ShieldCheck, Settings, Save, X, Loader2, Link as LinkIcon, Image as ImageIcon, FileText, Hash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 
@@ -58,11 +58,19 @@ const AdminDashboard: React.FC<Props> = ({
       if (editingItem.type === 'profile') {
         payload.socials = {
           linkedin: rawData.linkedin || '',
-          instagram: rawData.instagram || ''
+          instagram: rawData.instagram || '',
+          twitter: rawData.twitter || ''
         };
         delete payload.linkedin;
         delete payload.instagram;
+        delete payload.twitter;
         payload.achievements = rawData.achievements ? (rawData.achievements as string).split(',').map(s => s.trim()) : [];
+        payload.order_index = parseInt(rawData.order_index as string) || 0;
+      }
+
+      if (editingItem.type === 'event') {
+        payload.gallery = rawData.gallery ? (rawData.gallery as string).split(',').map(s => s.trim()) : [];
+        payload.is_featured = rawData.is_featured === 'on';
       }
 
       if (editingItem.type === 'hall') {
@@ -118,7 +126,6 @@ const AdminDashboard: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-950 pt-28">
-      {/* Sidebar - Positioned below fixed header height */}
       <aside className="w-full lg:w-80 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5 p-8 lg:fixed lg:top-24 lg:bottom-0 overflow-y-auto no-scrollbar">
         <div className="mb-8 hidden lg:block">
            <div className="flex items-center space-x-3 mb-2">
@@ -127,7 +134,7 @@ const AdminDashboard: React.FC<Props> = ({
              </div>
              <span className="text-xl font-black tracking-tighter uppercase italic">CLUB<span className="text-emerald-500">CORE</span></span>
            </div>
-           <p className="text-[8px] text-slate-600 font-black uppercase tracking-[0.3em] ml-1">Cloud Sync Active</p>
+           <p className="text-[8px] text-slate-600 font-black uppercase tracking-[0.3em] ml-1">Advanced Control Panel</p>
         </div>
         
         <nav className="space-y-2">
@@ -139,14 +146,13 @@ const AdminDashboard: React.FC<Props> = ({
         </nav>
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-grow lg:ml-80 p-8 lg:p-12 xl:p-16 w-full overflow-x-hidden">
         <div className="max-w-6xl mx-auto">
           {activeTab === 'overview' && (
             <div className="space-y-12">
               <div>
                 <h2 className="text-5xl font-black uppercase tracking-tighter mb-2 italic">Operation Center</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Supabase Integrated Backend</p>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Managing {profiles.length} athletes & {events.length} event cycles</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -154,9 +160,9 @@ const AdminDashboard: React.FC<Props> = ({
                   { label: 'Team Members', value: profiles.length, color: 'text-emerald-500' },
                   { label: 'Total Events', value: events.length, color: 'text-blue-500' },
                   { label: 'Hall Records', value: hallOfFame.length, color: 'text-yellow-500' },
-                  { label: 'Recruitment', value: 'Live', color: 'text-purple-500' }
+                  { label: 'Cloud Status', value: 'Synced', color: 'text-purple-500' }
                 ].map((stat, i) => (
-                    <div key={i} className="glass-card p-8 rounded-[32px] border-white/5 bg-slate-900/20 hover:bg-slate-900/40 transition-colors">
+                    <div key={i} className="glass-card p-8 rounded-[32px] border-white/5 bg-slate-900/20">
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{stat.label}</p>
                       <p className={`text-4xl font-black ${stat.color}`}>{stat.value}</p>
                     </div>
@@ -187,10 +193,13 @@ const AdminDashboard: React.FC<Props> = ({
                 <button onClick={() => setEditingItem({ type: 'profile', data: {} })} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors">New Profile</button>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                {profiles.map(p => (
+                {[...profiles].sort((a,b) => (a.order_index || 0) - (b.order_index || 0)).map(p => (
                   <div key={p.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between border-white/5 hover:border-emerald-500/30 transition-all bg-slate-900/20">
                     <div className="flex items-center space-x-6">
-                      <img src={p.photo} className="w-16 h-16 rounded-[20px] object-cover bg-slate-800" alt="" />
+                      <div className="relative">
+                        <img src={p.photo} className="w-16 h-16 rounded-[20px] object-cover bg-slate-800" alt="" />
+                        <span className="absolute -top-2 -left-2 bg-white/10 text-[8px] font-black p-1 rounded-md">#{p.order_index || 0}</span>
+                      </div>
                       <div>
                         <p className="text-xl font-black uppercase tracking-tighter">{p.name}</p>
                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">{p.position} • {p.role}</p>
@@ -220,7 +229,10 @@ const AdminDashboard: React.FC<Props> = ({
                         <img src={e.banner} className="w-full h-full object-cover" alt="" />
                       </div>
                       <div>
-                        <p className="text-xl font-black uppercase tracking-tighter">{e.title}</p>
+                        <div className="flex items-center gap-3">
+                          <p className="text-xl font-black uppercase tracking-tighter">{e.title}</p>
+                          {e.is_featured && <span className="bg-yellow-500/20 text-yellow-500 text-[7px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Featured</span>}
+                        </div>
                         <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{e.status} • {e.date}</p>
                       </div>
                     </div>
@@ -277,6 +289,14 @@ const AdminDashboard: React.FC<Props> = ({
                   </button>
                 </div>
               </div>
+
+              <div className="p-10 bg-white/5 border border-white/5 rounded-[40px] opacity-50 cursor-not-allowed">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Branding & Hero (Coming Soon)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="h-12 bg-white/5 rounded-xl" />
+                   <div className="h-12 bg-white/5 rounded-xl" />
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -286,9 +306,16 @@ const AdminDashboard: React.FC<Props> = ({
         {editingItem && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/95 backdrop-blur-3xl" onClick={() => setEditingItem(null)} />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-2xl glass-card rounded-[48px] border-white/10 p-10 overflow-y-auto max-h-[90vh] bg-slate-900/80">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-3xl glass-card rounded-[48px] border-white/10 p-10 overflow-y-auto max-h-[95vh] bg-slate-900/80">
               <div className="flex justify-between items-center mb-10">
-                <h3 className="text-3xl font-black uppercase tracking-tighter">Edit {editingItem.type}</h3>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl">
+                    {editingItem.type === 'profile' && <Users size={24} />}
+                    {editingItem.type === 'event' && <Calendar size={24} />}
+                    {editingItem.type === 'hall' && <Trophy size={24} />}
+                  </div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter">Edit {editingItem.type}</h3>
+                </div>
                 <button onClick={() => setEditingItem(null)} className="p-3 bg-white/5 rounded-2xl hover:text-white transition-colors"><X size={20} /></button>
               </div>
 
@@ -297,10 +324,12 @@ const AdminDashboard: React.FC<Props> = ({
                 {editingItem.type === 'event' && <EventForm data={editingItem.data} />}
                 {editingItem.type === 'hall' && <HallForm data={editingItem.data} />}
 
-                <button disabled={isSaving} type="submit" className="w-full py-5 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center space-x-3 hover:bg-emerald-400 transition-colors">
-                  {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                  <span>{isSaving ? 'Synchronizing...' : 'Save to Cloud'}</span>
-                </button>
+                <div className="pt-6 border-t border-white/5">
+                  <button disabled={isSaving} type="submit" className="w-full py-5 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center space-x-3 hover:bg-emerald-400 transition-colors shadow-2xl shadow-emerald-500/20">
+                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                    <span>{isSaving ? 'Updating Club Records...' : 'Save Changes'}</span>
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>
@@ -317,15 +346,17 @@ const ProfileForm = ({ data }: any) => (
       {Object.values(Role).map(r => <option key={r} value={r}>{r}</option>)}
     </SelectField>
     <InputField label="Position Title" name="position" defaultValue={data.position} required />
+    <InputField label="Order Priority (Low = Top)" name="order_index" type="number" defaultValue={data.order_index} icon={<Hash size={14} />} />
     <InputField label="Tenure Period" name="tenure" defaultValue={data.tenure} placeholder="2024 - 2025" />
-    <InputField label="Photo URL" name="photo" defaultValue={data.photo} required />
-    <InputField label="LinkedIn URL" name="linkedin" defaultValue={data.socials?.linkedin} />
-    <InputField label="Instagram URL" name="instagram" defaultValue={data.socials?.instagram} />
+    <div className="md:col-span-2"><InputField label="Photo URL" name="photo" defaultValue={data.photo} required icon={<ImageIcon size={14} />} /></div>
+    <InputField label="LinkedIn URL" name="linkedin" defaultValue={data.socials?.linkedin} icon={<LinkIcon size={14} />} />
+    <InputField label="Instagram URL" name="instagram" defaultValue={data.socials?.instagram} icon={<LinkIcon size={14} />} />
+    <InputField label="Twitter/X URL" name="twitter" defaultValue={data.socials?.twitter} icon={<LinkIcon size={14} />} />
     <div className="md:col-span-2">
-      <TextAreaField label="Achievements (Comma Separated)" name="achievements" defaultValue={data.achievements?.join(', ')} />
+      <TextAreaField label="Milestones (Comma Separated)" name="achievements" defaultValue={data.achievements?.join(', ')} placeholder="Gold Medalist, 3x Captain..." />
     </div>
     <div className="md:col-span-2">
-      <TextAreaField label="Biography" name="bio" defaultValue={data.bio} required />
+      <TextAreaField label="Leadership Biography" name="bio" defaultValue={data.bio} required />
     </div>
   </div>
 );
@@ -337,8 +368,14 @@ const EventForm = ({ data }: any) => (
     <SelectField label="Status" name="status" defaultValue={data.status || EventStatus.UPCOMING}>
       {Object.values(EventStatus).map(s => <option key={s} value={s}>{s}</option>)}
     </SelectField>
-    <div className="md:col-span-2"><InputField label="Banner Image URL" name="banner" defaultValue={data.banner} required /></div>
-    <div className="md:col-span-2"><TextAreaField label="Description" name="description" defaultValue={data.description} required /></div>
+    <div className="md:col-span-2"><InputField label="Banner Image URL" name="banner" defaultValue={data.banner} required icon={<ImageIcon size={14} />} /></div>
+    <div className="md:col-span-2"><TextAreaField label="Gallery URLs (Comma Separated)" name="gallery" defaultValue={data.gallery?.join(', ')} placeholder="https://img1.com, https://img2.com..." icon={<ImageIcon size={14} />} /></div>
+    <div className="md:col-span-2"><TextAreaField label="Post-Event Results / Summary" name="results" defaultValue={data.results} placeholder="Tournament standings, records broken..." icon={<FileText size={14} />} /></div>
+    <div className="md:col-span-2"><TextAreaField label="Main Description" name="description" defaultValue={data.description} required /></div>
+    <div className="flex items-center gap-4 py-4">
+      <input type="checkbox" name="is_featured" defaultChecked={data.is_featured} className="w-6 h-6 rounded accent-emerald-500 cursor-pointer" />
+      <span className="text-xs font-black uppercase tracking-widest text-slate-400">Featured in Live Feed</span>
+    </div>
   </div>
 );
 
@@ -352,7 +389,8 @@ const HallForm = ({ data }: any) => (
       {Object.values(PodiumPosition).map(p => <option key={p} value={p}>{p}</option>)}
     </SelectField>
     <InputField label="Winning Stat" name="stat" defaultValue={data.stat} placeholder="e.g. 450kg Total" />
-    <div className="md:col-span-2"><InputField label="Athlete Photo URL" name="athleteImg" defaultValue={data.athleteImg} /></div>
+    <div className="md:col-span-2"><InputField label="Athlete Social Link" name="athleteSocial" defaultValue={data.athleteSocial} placeholder="Instagram or Portfolio link" icon={<LinkIcon size={14} />} /></div>
+    <div className="md:col-span-2"><InputField label="Athlete Photo URL" name="athleteImg" defaultValue={data.athleteImg} icon={<ImageIcon size={14} />} /></div>
     <div className="flex items-center gap-4 py-4">
       <input type="checkbox" name="featured" defaultChecked={data.featured} className="w-6 h-6 rounded accent-emerald-500 cursor-pointer" />
       <span className="text-xs font-black uppercase tracking-widest text-slate-400">Featured Legend</span>
@@ -360,10 +398,13 @@ const HallForm = ({ data }: any) => (
   </div>
 );
 
-const InputField = ({ label, ...props }: any) => (
+const InputField = ({ label, icon, ...props }: any) => (
   <div>
     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
-    <input {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-emerald-500 outline-none transition-colors" />
+    <div className="relative">
+      {icon && <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">{icon}</div>}
+      <input {...props} className={`w-full bg-white/5 border border-white/5 rounded-2xl py-4 text-white text-sm focus:border-emerald-500 outline-none transition-colors ${icon ? 'pl-12 pr-5' : 'px-5'}`} />
+    </div>
   </div>
 );
 
@@ -376,10 +417,13 @@ const SelectField = ({ label, children, ...props }: any) => (
   </div>
 );
 
-const TextAreaField = ({ label, ...props }: any) => (
+const TextAreaField = ({ label, icon, ...props }: any) => (
   <div>
     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
-    <textarea {...props} className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm min-h-[100px] focus:border-emerald-500 outline-none transition-colors" />
+    <div className="relative">
+      {icon && <div className="absolute left-5 top-6 text-slate-500">{icon}</div>}
+      <textarea {...props} className={`w-full bg-white/5 border border-white/5 rounded-2xl py-4 text-white text-sm min-h-[100px] focus:border-emerald-500 outline-none transition-colors ${icon ? 'pl-12 pr-5' : 'px-5'}`} />
+    </div>
   </div>
 );
 

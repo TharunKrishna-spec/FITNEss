@@ -173,7 +173,8 @@ const HallOfFamePage: React.FC<Props> = ({ hallOfFame }) => {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {athletes.sort((a, b) => {
+                        {/* Fix: Explicitly cast 'athletes' as Achievement[] to fix the 'unknown' type error during sort */}
+                        {(athletes as Achievement[]).sort((a, b) => {
                           const order = { [PodiumPosition.GOLD]: 1, [PodiumPosition.SILVER]: 2, [PodiumPosition.BRONZE]: 3 };
                           return (order[a.position] || 9) - (order[b.position] || 9);
                         }).map((rec, rIdx) => {
