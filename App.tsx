@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
@@ -18,31 +19,35 @@ import LoginPage from './components/LoginPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsOfServicePage from './components/TermsOfServicePage';
 
-const NavLink = ({ to, children, icon: Icon, onClick, scrolled, index }: any) => {
+const NavLink = ({ to, state, children, icon: Icon, onClick, scrolled, index }: any) => {
   const location = useLocation();
-  const isActive = location.pathname === to;
+  // Active state logic: if it has state (like scrollTo), it's only "active" if we are currently at that hash/state
+  const isActive = location.pathname === to && (!state || (location.state && location.state.scrollTo === state.scrollTo));
   
   return (
     <motion.div
-      initial={false}
+      initial={{ opacity: 0, scale: 0.8, y: 10 }}
       animate={{ 
         y: scrolled ? 0 : 4,
         scale: scrolled ? 1 : 0.98,
         opacity: 1
       }}
+      whileHover={{ y: -2, scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       transition={{ 
         type: 'spring', 
         stiffness: 400, 
         damping: 30, 
-        delay: scrolled ? index * 0.02 : 0 
+        delay: index * 0.05 
       }}
     >
       <Link
         to={to}
+        state={state}
         onClick={onClick}
         className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
           isActive 
-            ? 'text-emerald-400 bg-emerald-500/5' 
+            ? 'text-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
             : 'text-slate-400 hover:text-white hover:bg-white/5'
         }`}
       >
@@ -63,32 +68,42 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) =>
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   
-  // Parallax effect for header background elements
-  const bgShift = useTransform(scrollYProgress, [0, 0.2], [0, -20]);
+  // Advanced Parallax transforms for header background layers
+  const bgShift1 = useTransform(scrollYProgress, [0, 0.5], [0, -40]);
+  const bgShift2 = useTransform(scrollYProgress, [0, 0.5], [0, 40]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+  const headerScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.98]);
 
   return (
     <motion.header 
-      initial={{ y: -100 }}
-      animate={{ y: 0, paddingTop: scrolled ? '8px' : '20px', paddingBottom: scrolled ? '8px' : '20px' }}
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1, paddingTop: scrolled ? '8px' : '20px', paddingBottom: scrolled ? '8px' : '20px' }}
+      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
       className="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none"
     >
       <div className="max-w-7xl w-full px-4 pointer-events-auto">
         <motion.div 
+          style={{ scale: headerScale }}
           animate={{
-            backgroundColor: scrolled ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0)',
+            backgroundColor: scrolled ? 'rgba(15, 23, 42, 0.85)' : 'rgba(15, 23, 42, 0)',
             backdropFilter: scrolled ? 'blur(32px)' : 'blur(0px)',
             borderColor: scrolled ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0)',
-            borderRadius: scrolled ? '24px' : '0px',
-            scale: scrolled ? 0.98 : 1,
+            borderRadius: scrolled ? '28px' : '0px',
             y: scrolled ? 4 : 0,
           }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="flex items-center justify-between py-3 px-6 border border-transparent relative overflow-hidden group shadow-2xl"
         >
-          {/* Subtle parallax background glow */}
+          {/* Parallax Layer 1: Emerald Glow */}
           <motion.div 
-            style={{ y: bgShift }}
-            className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 blur-[60px] rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+            style={{ y: bgShift1, opacity: bgOpacity }}
+            className="absolute -top-10 -right-10 w-48 h-48 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none"
+          />
+          
+          {/* Parallax Layer 2: Blue Glow */}
+          <motion.div 
+            style={{ y: bgShift2, opacity: bgOpacity }}
+            className="absolute -bottom-10 -left-10 w-48 h-48 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none"
           />
 
           <motion.div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-emerald-500 origin-center z-20 opacity-40" style={{ scaleX }} />
@@ -98,12 +113,18 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) =>
               scale: scrolled ? 1.05 : 1,
               y: scrolled ? 0 : 2
             }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            whileHover={{ scale: 1.1, rotate: -2 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
           >
             <Link to="/" className="flex items-center space-x-3 z-50" onClick={() => setIsMenuOpen(false)}>
-              <div className="p-2 bg-emerald-500 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+              <motion.div 
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 }}
+                className="p-2 bg-emerald-500 rounded-lg shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+              >
                 <Zap className="text-black" size={18} fill="currentColor" />
-              </div>
+              </motion.div>
               <div className="flex flex-col">
                 <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
                 <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
@@ -114,23 +135,34 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) =>
           <nav className="hidden lg:flex items-center space-x-1">
             <NavLink to="/" scrolled={scrolled} index={0}>Home</NavLink>
             <NavLink to="/team" scrolled={scrolled} index={1}>Leadership</NavLink>
-            <NavLink to="/timeline" scrolled={scrolled} index={2}>Events</NavLink>
-            <NavLink to="/hall-of-fame" scrolled={scrolled} index={3}>Hall of Fame</NavLink>
-            <NavLink to="/calculator" scrolled={scrolled} index={4}>Calculator</NavLink>
-            <NavLink to="/contact" scrolled={scrolled} index={5}>Join Us</NavLink>
-            {user && <NavLink to="/admin" icon={ShieldCheck} scrolled={scrolled} index={6}>Admin</NavLink>}
+            <NavLink to="/" state={{ scrollTo: 'departments' }} scrolled={scrolled} index={2}>Core Units</NavLink>
+            <NavLink to="/timeline" scrolled={scrolled} index={3}>Events</NavLink>
+            <NavLink to="/hall-of-fame" scrolled={scrolled} index={4}>Hall of Fame</NavLink>
+            <NavLink to="/calculator" scrolled={scrolled} index={5}>Calculator</NavLink>
+            <NavLink to="/contact" scrolled={scrolled} index={6}>Join Us</NavLink>
+            {user && <NavLink to="/admin" icon={ShieldCheck} scrolled={scrolled} index={7}>Admin</NavLink>}
           </nav>
 
           <div className="flex items-center space-x-4 z-50">
             {user && (
-              <button onClick={onLogout} className="hidden lg:flex items-center space-x-2 text-red-500 hover:text-red-400 font-black text-[9px] uppercase tracking-widest px-4 py-2 bg-red-500/10 rounded-xl transition-all">
+              <motion.button 
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onLogout} 
+                className="hidden lg:flex items-center space-x-2 text-red-500 font-black text-[9px] uppercase tracking-widest px-4 py-2 bg-red-500/10 rounded-xl transition-all border border-red-500/20"
+              >
                 <LogOut size={14} />
                 <span>Exit</span>
-              </button>
+              </motion.button>
             )}
-            <button className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <motion.button 
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors" 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </div>
@@ -209,13 +241,15 @@ const App: React.FC = () => {
           {isLoading ? (
             <motion.div 
               key="loader"
+              initial={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
               className="fixed inset-0 z-[200] bg-[#020617] flex flex-col items-center justify-center space-y-6"
             >
               <div className="relative">
                 <motion.div 
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                   className="w-24 h-24 border-t-2 border-emerald-500 rounded-full"
                 />
                 <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-500 animate-pulse" size={32} />
@@ -247,14 +281,16 @@ const App: React.FC = () => {
                       {[
                         { name: 'Home', path: '/' },
                         { name: 'Leadership', path: '/team' },
+                        { name: 'Core Units', path: '/', state: { scrollTo: 'departments' } },
                         { name: 'Events', path: '/timeline' },
                         { name: 'Hall of Fame', path: '/hall-of-fame' },
                         { name: 'Calculator', path: '/calculator' },
                         { name: 'Join Us', path: '/contact' }
-                      ].map((item) => (
+                      ].map((item: any) => (
                         <Link 
                           key={item.name}
                           to={item.path} 
+                          state={item.state}
                           onClick={() => setIsMenuOpen(false)} 
                           className="text-4xl font-black uppercase tracking-tighter hover:text-emerald-500 transition-colors py-2 border-b border-white/5"
                         >

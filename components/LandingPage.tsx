@@ -5,7 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   ArrowRight, Zap, Target, Shield, Trophy, Dumbbell, 
   ChevronDown, Activity, Flame, Star, Calendar, 
-  Camera, Megaphone, Laptop, PenTool, ArrowUpRight, Clock, MapPin, Ticket
+  Camera, Megaphone, Laptop, PenTool, ArrowUpRight, Clock, MapPin, Ticket,
+  Quote, CheckCircle2, BarChart3, Users2
 } from 'lucide-react';
 import TimelinePage from './TimelinePage';
 import HallOfFamePage from './HallOfFamePage';
@@ -14,36 +15,40 @@ import { Event, Achievement, EventStatus } from '../types';
 const DEPARTMENTS = [
   {
     id: 'TECH',
-    name: 'Technical & Training',
+    name: 'Scientific Training',
     icon: Laptop,
-    desc: 'The biomechanical core. We analyze lifting form, craft scientific programs, and lead specialized coaching clinics.',
+    desc: 'The biomechanical core of our operations. We bridge the gap between sports science and practical application.',
+    scope: ['Form Analysis', 'Periodization', 'Coaching Clinics', 'Nutrition Logic'],
     color: 'from-emerald-500 to-teal-600',
     glow: 'rgba(16, 185, 129, 0.3)',
     img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=800'
   },
   {
     id: 'MEDIA',
-    name: 'Media & Design',
+    name: 'Creative Narrative',
     icon: Camera,
-    desc: 'The creative pulse. Documenting the raw intensity of elite training and designing our official club aesthetic.',
+    desc: 'The visual heartbeat of the club. We capture the raw, unedited intensity of high-performance athletics.',
+    scope: ['Action Photography', 'Cinematic Edits', 'Visual Branding', 'Web Design'],
     color: 'from-blue-500 to-indigo-600',
     glow: 'rgba(59, 130, 246, 0.3)',
     img: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800'
   },
   {
     id: 'LOGS',
-    name: 'Events & Logistics',
+    name: 'Event Architecture',
     icon: Calendar,
-    desc: 'The mission architects. Planning massive campus expos, strength meets, and official VIT competitions.',
+    desc: 'The masterminds behind VIT\'s biggest strength events. We turn campus arenas into professional stages.',
+    scope: ['Campus Clash', 'Indoor Strength Open', 'Workshops', 'Logistics'],
     color: 'from-purple-500 to-fuchsia-600',
     glow: 'rgba(168, 85, 247, 0.3)',
     img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200'
   },
   {
     id: 'PR',
-    name: 'Outreach & PR',
+    name: 'Strategic Outreach',
     icon: Megaphone,
-    desc: 'The voice of the members. Managing public relations, campus collaborations, and official brand growth.',
+    desc: 'The voice that resonates across VIT Chennai. We manage the club’s public perception and industry links.',
+    scope: ['Brand Relations', 'Campus PR', 'Member Relations', 'Sponsorships'],
     color: 'from-red-500 to-orange-600',
     glow: 'rgba(239, 68, 68, 0.3)',
     img: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=800'
@@ -186,6 +191,83 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
         </motion.div>
       </section>
 
+      {/* Our Mission: What We Do */}
+      <section className="py-48 relative overflow-hidden">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-12"
+            >
+              <div>
+                <div className="flex items-center space-x-3 text-emerald-500 mb-6 font-black uppercase tracking-[0.5em] text-[10px]">
+                  <Activity size={16} />
+                  <span>The Protocol</span>
+                </div>
+                <h2 className="text-6xl md:text-[8rem] font-black uppercase tracking-tighter leading-[0.8] mb-12 italic">
+                  WHAT WE <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>EXECUTE.</span>
+                </h2>
+                <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl">
+                  Fitness Club VIT Chennai isn’t just a gym community. We are a high-performance ecosystem dedicated to the science of physical transformation and the discipline of competitive athletics.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                {[
+                  { title: 'Data Driven', icon: BarChart3, desc: 'We track biomechanics and progress telemetry to ensure every lift is optimized.' },
+                  { title: 'Peer Led', icon: Users2, desc: 'Mentorship by campus record-holders and seasoned student athletes.' },
+                  { title: 'Standardized', icon: Shield, desc: 'Implementing international powerlifting and fitness standards in all meets.' },
+                  { title: 'Peak Output', icon: Flame, desc: 'Pushing the boundaries of human potential through community grit.' }
+                ].map((item, i) => (
+                  <div key={i} className="space-y-3">
+                    <div className="flex items-center space-x-3 text-emerald-500 font-black uppercase tracking-widest text-[10px]">
+                      <item.icon size={16} />
+                      <span>{item.title}</span>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <div className="relative">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="relative z-10 rounded-[60px] overflow-hidden border border-white/5 glass-card aspect-square lg:aspect-auto lg:h-[700px]"
+              >
+                <img 
+                  src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=1200" 
+                  className="w-full h-full object-cover grayscale brightness-50 contrast-125"
+                  alt="Philosophy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                
+                <div className="absolute inset-12 flex flex-col justify-end">
+                  <div className="p-8 backdrop-blur-3xl bg-white/5 border border-white/10 rounded-[40px] space-y-6">
+                    <Quote className="text-emerald-500/20" size={64} />
+                    <p className="text-2xl font-black italic uppercase tracking-tighter leading-tight text-white">
+                      "Success isn't always about greatness. It's about consistency. Consistent hard work gains success. Greatness will come."
+                    </p>
+                    <div className="h-px w-full bg-white/10" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Core Philosophy</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500">Fitness Club V4</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Geometric accent */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 border-4 border-dashed border-emerald-500/10 rounded-full animate-spin-slow pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Upcoming Events Section */}
       <section id="upcoming" className="py-48 relative overflow-hidden bg-slate-950/80">
         <div className="container mx-auto px-6 max-w-7xl">
@@ -306,7 +388,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1, duration: 0.8 }}
-                className="group relative h-[500px] rounded-[50px] overflow-hidden glass-card border-white/5 cursor-pointer shadow-2xl"
+                className="group relative min-h-[560px] lg:h-[600px] rounded-[50px] overflow-hidden glass-card border-white/5 cursor-pointer shadow-2xl"
               >
                 <motion.img 
                   src={dept.img} 
@@ -321,7 +403,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                   </span>
                 </div>
 
-                <div className="absolute inset-12 flex flex-col justify-between z-10">
+                <div className="absolute inset-10 lg:inset-12 flex flex-col justify-between z-10">
                   <div className="flex items-start justify-between">
                     <div 
                       className="p-6 rounded-3xl backdrop-blur-3xl border border-white/10 bg-white/5 transition-all duration-500 group-hover:scale-110"
@@ -332,13 +414,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                     <ArrowUpRight className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" size={36} />
                   </div>
                   
-                  <div className="space-y-4">
-                    <h3 className={`text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-none transition-all duration-500 group-hover:italic bg-gradient-to-r ${dept.color} bg-clip-text group-hover:text-transparent`}>
-                      {dept.name}
-                    </h3>
-                    <p className="text-slate-400 font-medium max-w-sm group-hover:text-white transition-colors duration-500 leading-relaxed">
-                      {dept.desc}
-                    </p>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <h3 className={`text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-none transition-all duration-500 group-hover:italic bg-gradient-to-r ${dept.color} bg-clip-text group-hover:text-transparent`}>
+                        {dept.name}
+                      </h3>
+                      <p className="text-slate-400 font-medium max-w-sm group-hover:text-white transition-colors duration-500 leading-relaxed">
+                        {dept.desc}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-700 delay-100">
+                      {dept.scope.map((s, si) => (
+                        <div key={si} className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 text-[8px] font-black uppercase tracking-widest text-white/70">
+                          <CheckCircle2 size={10} className="text-emerald-500" />
+                          <span>{s}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </motion.div>

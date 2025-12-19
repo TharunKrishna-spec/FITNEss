@@ -93,7 +93,8 @@ const FloatingDockDesktop = ({
   items: { title: string; icon: React.ReactNode; onClick: () => void; active: boolean }[];
   className?: string;
 }) => {
-  let mouseX = useMotionValue(Infinity);
+  // Use explicit generic type for MotionValue to avoid inference issues with useMotionValue
+  let mouseX = useMotionValue<number>(Infinity);
   return (
     <motion.div
       onMouseMove={(e) => mouseX.set(e.pageX)}
@@ -104,7 +105,6 @@ const FloatingDockDesktop = ({
       )}
     >
       {items.map((item) => (
-        /* Fix: Explicitly pass props to IconContainer instead of spreading 'item' to fix TypeScript key prop and type inference errors */
         <IconContainer 
           mouseX={mouseX} 
           key={item.title} 
@@ -118,6 +118,7 @@ const FloatingDockDesktop = ({
   );
 };
 
+// Added key to props to solve the JSX key property type error and specified MotionValue generic type
 function IconContainer({
   mouseX,
   title,
@@ -125,11 +126,12 @@ function IconContainer({
   onClick,
   active,
 }: {
-  mouseX: MotionValue;
+  mouseX: MotionValue<number>;
   title: string;
   icon: React.ReactNode;
   onClick: () => void;
   active: boolean;
+  key?: React.Key;
 }) {
   let ref = useRef<HTMLDivElement>(null);
 
