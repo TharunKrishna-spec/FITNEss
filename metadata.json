@@ -1,0 +1,7 @@
+{
+  "name": "Titan Fitness Club",
+  "description": "A premium, high-performance fitness club portal featuring member management, event timelines, hall of fame, and a full-featured admin dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
