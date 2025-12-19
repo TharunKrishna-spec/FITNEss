@@ -21,7 +21,6 @@ import TermsOfServicePage from './components/TermsOfServicePage';
 
 const NavLink = ({ to, state, children, icon: Icon, onClick, scrolled, index }: any) => {
   const location = useLocation();
-  // Active state logic: if it has state (like scrollTo), it's only "active" if we are currently at that hash/state
   const isActive = location.pathname === to && (!state || (location.state && location.state.scrollTo === state.scrollTo));
   
   return (
@@ -68,7 +67,6 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) =>
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   
-  // Advanced Parallax transforms for header background layers
   const bgShift1 = useTransform(scrollYProgress, [0, 0.5], [0, -40]);
   const bgShift2 = useTransform(scrollYProgress, [0, 0.5], [0, 40]);
   const bgOpacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
@@ -94,18 +92,14 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, onLogout }: any) =>
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="flex items-center justify-between py-3 px-6 border border-transparent relative overflow-hidden group shadow-2xl"
         >
-          {/* Parallax Layer 1: Emerald Glow */}
           <motion.div 
             style={{ y: bgShift1, opacity: bgOpacity }}
             className="absolute -top-10 -right-10 w-48 h-48 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none"
           />
-          
-          {/* Parallax Layer 2: Blue Glow */}
           <motion.div 
             style={{ y: bgShift2, opacity: bgOpacity }}
             className="absolute -bottom-10 -left-10 w-48 h-48 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none"
           />
-
           <motion.div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-emerald-500 origin-center z-20 opacity-40" style={{ scaleX }} />
 
           <motion.div
@@ -174,7 +168,14 @@ const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
   const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS);
   const [hallOfFame, setHallOfFame] = useState<Achievement[]>(INITIAL_HALL_OF_FAME);
-  const [recruitmentLink, setRecruitmentLink] = useState('https://forms.gle/mock');
+  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({
+    recruitment_link: 'https://forms.gle/mock',
+    hero_title: 'FITNESS CLUB.',
+    hero_subtitle: 'Representing the athletic pulse of VIT Chennai. We empower students to achieve professional-grade results through community and discipline.',
+    about_description: 'Fitness Club VIT Chennai isn’t just a gym community. We are a high-performance ecosystem dedicated to the science of physical transformation and the discipline of competitive athletics.',
+    contact_email: 'fitnessclub.vitcc@gmail.com',
+    hero_image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=1200&auto=format&fit=crop'
+  });
   const [user, setUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -201,13 +202,20 @@ const App: React.FC = () => {
           supabase.from('profiles').select('*'),
           supabase.from('events').select('*'),
           supabase.from('hall_of_fame').select('*'),
-          supabase.from('site_config').select('*').eq('key', 'recruitment_link').maybeSingle()
+          supabase.from('site_config').select('*')
         ]);
 
         if (p && !pErr && p.length > 0) setProfiles(p);
         if (e && !eErr && e.length > 0) setEvents(e);
         if (h && !hErr && h.length > 0) setHallOfFame(h);
-        if (c && c.value) setRecruitmentLink(c.value);
+        
+        if (c && c.length > 0) {
+          const configMap: Record<string, string> = {};
+          c.forEach(item => {
+            configMap[item.key] = item.value;
+          });
+          setSiteConfig(prev => ({ ...prev, ...configMap }));
+        }
 
       } catch (err) {
         console.warn("Using offline constants.");
@@ -321,16 +329,16 @@ const App: React.FC = () => {
 
               <main className="flex-grow">
                 <Routes>
-                  <Route path="/" element={<LandingPage events={events} hallOfFame={hallOfFame} />} />
+                  <Route path="/" element={<LandingPage events={events} hallOfFame={hallOfFame} config={siteConfig} />} />
                   <Route path="/team" element={<BoardMembersPage profiles={profiles} />} />
                   <Route path="/timeline" element={<TimelinePage events={events} />} />
                   <Route path="/hall-of-fame" element={<HallOfFamePage hallOfFame={hallOfFame} />} />
-                  <Route path="/contact" element={<ContactPage recruitmentLink={recruitmentLink} />} />
+                  <Route path="/contact" element={<ContactPage config={siteConfig} />} />
                   <Route path="/calculator" element={<CalculatorPage />} />
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfServicePage />} />
                   <Route path="/login" element={user ? <Navigate to="/admin" /> : <LoginPage onLogin={handleLogin} />} />
-                  <Route path="/admin" element={user ? <AdminDashboard profiles={profiles} setProfiles={setProfiles} events={events} setEvents={setEvents} hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} recruitmentLink={recruitmentLink} setRecruitmentLink={setRecruitmentLink} /> : <Navigate to="/login" />} />
+                  <Route path="/admin" element={user ? <AdminDashboard profiles={profiles} setProfiles={setProfiles} events={events} setEvents={setEvents} hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <Navigate to="/login" />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </main>

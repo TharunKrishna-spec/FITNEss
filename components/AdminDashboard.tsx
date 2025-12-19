@@ -1,7 +1,11 @@
 
 import React, { useState } from 'react';
 import { Role, Profile, Event, EventStatus, Achievement, PodiumPosition } from '../types';
-import { LayoutDashboard, Users, Calendar, Trophy, Plus, Trash2, Edit2, ShieldCheck, Settings, Save, X, Loader2, Link as LinkIcon, Image as ImageIcon, FileText, Hash } from 'lucide-react';
+import { 
+  LayoutDashboard, Users, Calendar, Trophy, Plus, Trash2, Edit2, ShieldCheck, 
+  Settings, Save, X, Loader2, Link as LinkIcon, Image as ImageIcon, FileText, Hash,
+  Globe, Mail, Type, LayoutTemplate, Palette
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 
@@ -12,19 +16,20 @@ interface Props {
   setEvents: (e: Event[]) => void;
   hallOfFame: Achievement[];
   setHallOfFame: (h: Achievement[]) => void;
-  recruitmentLink: string;
-  setRecruitmentLink: (l: string) => void;
+  siteConfig: Record<string, string>;
+  setSiteConfig: (c: Record<string, string>) => void;
 }
 
 const AdminDashboard: React.FC<Props> = ({ 
   profiles, setProfiles, 
   events, setEvents, 
   hallOfFame, setHallOfFame,
-  recruitmentLink, setRecruitmentLink 
+  siteConfig, setSiteConfig 
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'profiles' | 'events' | 'hall' | 'settings'>('overview');
   const [editingItem, setEditingItem] = useState<{ type: 'profile' | 'event' | 'hall', data: any } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [localConfig, setLocalConfig] = useState(siteConfig);
 
   const deleteProfile = async (id: string) => {
     if (!confirm('Are you sure you want to delete this profile?')) return;
@@ -105,11 +110,29 @@ const AdminDashboard: React.FC<Props> = ({
     }
   };
 
-  const updateConfig = async () => {
+  const updateGlobalConfig = async () => {
     setIsSaving(true);
-    const { error } = await supabase.from('site_config').upsert({ key: 'recruitment_link', value: recruitmentLink });
-    if (error) alert('Error updating config');
-    setIsSaving(false);
+    try {
+      const promises = Object.entries(localConfig).map(([key, value]) => 
+        supabase.from('site_config').upsert({ key, value })
+      );
+      
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) throw new Error('Some settings failed to sync');
+      
+      setSiteConfig(localConfig);
+      alert('Brand configuration synchronized successfully.');
+    } catch (err: any) {
+      alert('Sync failed: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConfigChange = (key: string, value: string) => {
+    setLocalConfig(prev => ({ ...prev, [key]: value }));
   };
 
   const SidebarBtn = ({ id, label, icon: Icon }: { id: any, label: string, icon: any }) => (
@@ -142,7 +165,7 @@ const AdminDashboard: React.FC<Props> = ({
           <SidebarBtn id="profiles" label="Team Roster" icon={Users} />
           <SidebarBtn id="events" label="Event Control" icon={Calendar} />
           <SidebarBtn id="hall" label="Hall of Records" icon={Trophy} />
-          <SidebarBtn id="settings" label="Site Config" icon={Settings} />
+          <SidebarBtn id="settings" label="Site CMS" icon={Settings} />
         </nav>
       </aside>
 
@@ -275,26 +298,84 @@ const AdminDashboard: React.FC<Props> = ({
           )}
 
           {activeTab === 'settings' && (
-            <div className="space-y-8">
-              <h2 className="text-5xl font-black uppercase tracking-tighter italic">Cloud Config</h2>
-              <div className="glass-card p-10 rounded-[40px] border-white/5 bg-slate-900/20">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Official Recruitment Link</label>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="relative flex-grow">
-                    <LinkIcon size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" />
-                    <input type="text" value={recruitmentLink} onChange={(e) => setRecruitmentLink(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-emerald-500 transition-colors" />
+            <div className="space-y-12">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <div>
+                  <h2 className="text-5xl font-black uppercase tracking-tighter italic mb-2">Brand CMS</h2>
+                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Customize site-wide identity and assets</p>
+                </div>
+                <button onClick={updateGlobalConfig} disabled={isSaving} className="bg-emerald-500 text-black px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-400 transition-all shadow-xl shadow-emerald-500/20">
+                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={16} />} 
+                  <span>Sync Global CMS</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                {/* Hero Section Copy */}
+                <div className="glass-card p-10 rounded-[40px] border-white/5 bg-slate-900/20 space-y-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <LayoutTemplate size={20} className="text-emerald-500" />
+                    <h3 className="text-xl font-black uppercase tracking-tighter">Hero Content</h3>
                   </div>
-                  <button onClick={updateConfig} disabled={isSaving} className="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors">
-                    {isSaving && <Loader2 size={14} className="animate-spin" />} Sync Link
-                  </button>
+                  
+                  <CMSInput 
+                    label="Hero Title" 
+                    icon={<Type size={16} />} 
+                    value={localConfig.hero_title} 
+                    onChange={(v: string) => handleConfigChange('hero_title', v)} 
+                  />
+                  
+                  <CMSArea 
+                    label="Hero Subtitle" 
+                    icon={<FileText size={16} />} 
+                    value={localConfig.hero_subtitle} 
+                    onChange={(v: string) => handleConfigChange('hero_subtitle', v)} 
+                  />
+                  
+                  <CMSInput 
+                    label="Hero Action Image (Athlete)" 
+                    icon={<ImageIcon size={16} />} 
+                    value={localConfig.hero_image} 
+                    onChange={(v: string) => handleConfigChange('hero_image', v)} 
+                  />
+                </div>
+
+                {/* About & Recruitment */}
+                <div className="glass-card p-10 rounded-[40px] border-white/5 bg-slate-900/20 space-y-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Palette size={20} className="text-blue-500" />
+                    <h3 className="text-xl font-black uppercase tracking-tighter">Mission & Operations</h3>
+                  </div>
+
+                  <CMSArea 
+                    label="About Club Description" 
+                    icon={<FileText size={16} />} 
+                    value={localConfig.about_description} 
+                    onChange={(v: string) => handleConfigChange('about_description', v)} 
+                  />
+
+                  <CMSInput 
+                    label="Active Recruitment Link" 
+                    icon={<Globe size={16} />} 
+                    value={localConfig.recruitment_link} 
+                    onChange={(v: string) => handleConfigChange('recruitment_link', v)} 
+                  />
+
+                  <CMSInput 
+                    label="Official Support Email" 
+                    icon={<Mail size={16} />} 
+                    value={localConfig.contact_email} 
+                    onChange={(v: string) => handleConfigChange('contact_email', v)} 
+                  />
                 </div>
               </div>
 
-              <div className="p-10 bg-white/5 border border-white/5 rounded-[40px] opacity-50 cursor-not-allowed">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Branding & Hero (Coming Soon)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="h-12 bg-white/5 rounded-xl" />
-                   <div className="h-12 bg-white/5 rounded-xl" />
+              {/* Preview Area */}
+              <div className="p-10 border border-dashed border-white/10 rounded-[40px] bg-white/[0.02]">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-700 mb-8 text-center">Dynamic Live Preview</h4>
+                <div className="flex flex-col items-center justify-center text-center space-y-6">
+                  <h5 className="text-4xl font-black uppercase tracking-tighter italic text-slate-400">{localConfig.hero_title}</h5>
+                  <p className="text-slate-600 max-w-lg text-sm font-medium leading-relaxed">{localConfig.hero_subtitle}</p>
                 </div>
               </div>
             </div>
@@ -338,6 +419,36 @@ const AdminDashboard: React.FC<Props> = ({
     </div>
   );
 };
+
+// CMS Components
+const CMSInput = ({ label, icon, value, onChange }: any) => (
+  <div>
+    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
+    <div className="relative">
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600">{icon}</div>
+      <input 
+        type="text" 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)} 
+        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white text-sm focus:border-emerald-500/50 outline-none transition-all" 
+      />
+    </div>
+  </div>
+);
+
+const CMSArea = ({ label, icon, value, onChange }: any) => (
+  <div>
+    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
+    <div className="relative">
+      <div className="absolute left-5 top-6 text-slate-600">{icon}</div>
+      <textarea 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)} 
+        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white text-sm min-h-[120px] focus:border-emerald-500/50 outline-none transition-all" 
+      />
+    </div>
+  </div>
+);
 
 const ProfileForm = ({ data }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -403,7 +514,7 @@ const InputField = ({ label, icon, ...props }: any) => (
     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 ml-2">{label}</label>
     <div className="relative">
       {icon && <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">{icon}</div>}
-      <input {...props} className={`w-full bg-white/5 border border-white/5 rounded-2xl py-4 text-white text-sm focus:border-emerald-500 outline-none transition-colors ${icon ? 'pl-12 pr-5' : 'px-5'}`} />
+      <input {...props} className={`w-full bg-white/5 border border-white/10 rounded-2xl py-4 text-white text-sm focus:border-emerald-500 outline-none transition-colors ${icon ? 'pl-12 pr-5' : 'px-5'}`} />
     </div>
   </div>
 );

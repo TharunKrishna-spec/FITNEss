@@ -4,13 +4,12 @@ import { Mail, Instagram, Send, ArrowUpRight, Sparkles, FileText } from 'lucide-
 import { motion } from 'framer-motion';
 
 interface ContactPageProps {
-  recruitmentLink: string;
+  config: Record<string, string>;
 }
 
-const ContactPage: React.FC<ContactPageProps> = ({ recruitmentLink }) => {
+const ContactPage: React.FC<ContactPageProps> = ({ config }) => {
   return (
     <div className="relative min-h-screen bg-[#020617] overflow-hidden">
-      {/* Background Decor */}
       <div className="absolute top-0 left-[-10%] w-[50vw] h-[50vw] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-[-10%] w-[40vw] h-[40vw] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -54,7 +53,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ recruitmentLink }) => {
                 </div>
                 <div>
                   <h4 className="font-black uppercase tracking-widest text-[11px] text-slate-500 mb-2">Official Inquiry</h4>
-                  <p className="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">fitnessclub.vitcc@gmail.com</p>
+                  <p className="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">{config.contact_email}</p>
                 </div>
               </div>
             </div>
@@ -67,7 +66,6 @@ const ContactPage: React.FC<ContactPageProps> = ({ recruitmentLink }) => {
             className="relative"
           >
             <div className="glass-card rounded-[60px] p-10 md:p-16 border-white/5 shadow-2xl overflow-hidden group">
-              {/* Decorative elements */}
               <div className="absolute top-0 right-0 p-12 text-white/[0.02] group-hover:text-emerald-500/[0.05] transition-colors pointer-events-none">
                 <FileText size={200} />
               </div>
@@ -80,7 +78,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ recruitmentLink }) => {
 
                 <div className="space-y-6">
                   <a 
-                    href={recruitmentLink} 
+                    href={config.recruitment_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center justify-between w-full py-8 px-10 bg-emerald-500 text-black rounded-[32px] font-black uppercase tracking-widest text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-emerald-500/20"
@@ -116,7 +114,6 @@ const ContactPage: React.FC<ContactPageProps> = ({ recruitmentLink }) => {
               </div>
             </div>
 
-            {/* Float badge */}
             <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 4 }}

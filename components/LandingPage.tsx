@@ -3,9 +3,9 @@ import React, { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  ArrowRight, Zap, Target, Shield, Trophy, Dumbbell, 
-  ChevronDown, Activity, Flame, Star, Calendar, 
-  Camera, Megaphone, Laptop, PenTool, ArrowUpRight, Clock, MapPin, Ticket,
+  ArrowRight, Zap, Shield, Trophy, 
+  ChevronDown, Activity, Flame, Calendar, 
+  Camera, Megaphone, Laptop, PenTool, ArrowUpRight, Ticket,
   Quote, CheckCircle2, BarChart3, Users2
 } from 'lucide-react';
 import TimelinePage from './TimelinePage';
@@ -58,9 +58,10 @@ const DEPARTMENTS = [
 interface LandingPageProps {
   events: Event[];
   hallOfFame: Achievement[];
+  config: Record<string, string>;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   
@@ -100,12 +101,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
 
   return (
     <div ref={containerRef} className="w-full bg-[#020617] selection:bg-emerald-500 selection:text-black">
-      {/* Noise Overlay */}
       <div className="fixed inset-0 pointer-events-none z-[100] opacity-10 mix-blend-overlay">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
       </div>
 
-      {/* Hero Section */}
       <section className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-emerald-500/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-blue-500/10 blur-[120px] rounded-full" />
@@ -135,13 +134,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">VIT CHENNAI OFFICIAL STUDENT CLUB</span>
               </motion.div>
               
-              <h1 className="text-6xl md:text-[11rem] font-black tracking-tighter mb-2 leading-[0.8] uppercase">
-                FITNESS <br />
-                <span className="text-transparent stroke-white stroke-1 hover:text-white transition-all duration-500" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.3)' }}>CLUB.</span>
+              <h1 className="text-6xl md:text-[9rem] font-black tracking-tighter mb-2 leading-[0.85] uppercase">
+                {config.hero_title.split('.').map((part, i) => (
+                  <React.Fragment key={i}>
+                    {part}{i === 0 && config.hero_title.includes('.') && <br />}
+                  </React.Fragment>
+                ))}
               </h1>
               
               <p className="text-lg md:text-xl text-slate-400 max-w-xl mb-12 font-medium leading-relaxed mt-6">
-                Representing the athletic pulse of VIT Chennai. We empower students to achieve professional-grade results through community and discipline.
+                {config.hero_subtitle}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-6">
@@ -164,7 +166,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                 <div className="absolute -inset-4 bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                 <div className="relative aspect-[3/4] rounded-[60px] overflow-hidden border border-white/10 glass-card">
                   <img 
-                    src="https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=1200&auto=format&fit=crop" 
+                    src={config.hero_image} 
                     className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:scale-110 transition-all duration-1000"
                     alt="Campus Athlete"
                   />
@@ -191,7 +193,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
         </motion.div>
       </section>
 
-      {/* Our Mission: What We Do */}
       <section className="py-48 relative overflow-hidden">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
@@ -210,7 +211,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                   WHAT WE <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>EXECUTE.</span>
                 </h2>
                 <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl">
-                  Fitness Club VIT Chennai isn’t just a gym community. We are a high-performance ecosystem dedicated to the science of physical transformation and the discipline of competitive athletics.
+                  {config.about_description}
                 </p>
               </div>
 
@@ -260,15 +261,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                   </div>
                 </div>
               </motion.div>
-              
-              {/* Geometric accent */}
               <div className="absolute -top-12 -right-12 w-64 h-64 border-4 border-dashed border-emerald-500/10 rounded-full animate-spin-slow pointer-events-none" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Upcoming Events Section */}
       <section id="upcoming" className="py-48 relative overflow-hidden bg-slate-950/80">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
@@ -314,7 +312,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                   <img src={event.banner} className="absolute inset-0 w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:scale-110 group-hover:opacity-60 transition-all duration-1000" alt="" />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                   
-                  {/* Event Badges */}
                   <div className="absolute top-10 left-10 flex flex-wrap gap-4">
                     <div className={`flex items-center space-x-2 px-6 py-2 rounded-full border backdrop-blur-3xl font-black text-[10px] uppercase tracking-widest ${
                       event.status === EventStatus.REGISTRATION_OPEN 
@@ -352,7 +349,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
         </div>
       </section>
 
-      {/* Departments Section */}
       <section id="departments" className="py-48 relative bg-slate-950/50">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-12">
@@ -396,13 +392,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                   alt={dept.name} 
                 />
                 <div className={`absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent group-hover:via-slate-950/20 transition-all duration-700`} />
-                
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
                   <span className="text-[15rem] font-black uppercase rotate-[-90deg] text-white/[0.03] group-hover:text-white/[0.05] transition-all duration-700 tracking-tighter">
                     {dept.id}
                   </span>
                 </div>
-
                 <div className="absolute inset-10 lg:inset-12 flex flex-col justify-between z-10">
                   <div className="flex items-start justify-between">
                     <div 
@@ -413,7 +407,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                     </div>
                     <ArrowUpRight className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" size={36} />
                   </div>
-                  
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <h3 className={`text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-none transition-all duration-500 group-hover:italic bg-gradient-to-r ${dept.color} bg-clip-text group-hover:text-transparent`}>
@@ -423,7 +416,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
                         {dept.desc}
                       </p>
                     </div>
-
                     <div className="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-700 delay-100">
                       {dept.scope.map((s, si) => (
                         <div key={si} className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 text-[8px] font-black uppercase tracking-widest text-white/70">
@@ -440,7 +432,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
         </div>
       </section>
 
-      {/* Roadmap Section */}
       <section className="py-48 bg-slate-900/10 relative">
         <div className="container mx-auto px-6 max-w-7xl relative z-10">
            <div className="flex flex-col items-center text-center mb-36">
@@ -458,7 +449,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame }) => {
         </div>
       </section>
 
-      {/* Wall of Fame Section */}
       <section className="py-48 relative overflow-hidden">
         <div className="container mx-auto px-6 max-w-7xl">
            <div className="flex flex-col lg:flex-row justify-between items-end mb-36 gap-12">
