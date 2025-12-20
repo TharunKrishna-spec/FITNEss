@@ -2,8 +2,7 @@
 export enum Role {
   BOARD = 'Board Member',
   LEAD = 'Lead',
-  ALUMNI = 'Alumni',
-  MEMBER = 'FFCS Member'
+  ALUMNI = 'Alumni'
 }
 
 export interface Profile {
@@ -11,7 +10,6 @@ export interface Profile {
   name: string;
   role: Role;
   position: string;
-  reg_no?: string; // Registration Number for QR Scanning
   tenure: string;
   photo: string;
   bio: string;
