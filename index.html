@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,6 +29,22 @@
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom styles for the scanning laser */
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+        .scanner-laser {
+            height: 2px;
+            background: #10b981;
+            box-shadow: 0 0 15px #10b981, 0 0 30px #10b981;
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            animation: scan 2s linear infinite;
+        }
     </style>
 <script type="importmap">
 {
@@ -42,7 +59,8 @@
     "recharts": "https://esm.sh/recharts@2.15.1?external=react,react-dom",
     "lucide-react": "https://esm.sh/lucide-react@0.474.0?external=react",
     "framer-motion": "https://esm.sh/framer-motion@11.11.17?external=react,react-dom",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.48.1"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.48.1",
+    "jsqr": "https://esm.sh/jsqr@1.4.0"
   }
 }
 </script>

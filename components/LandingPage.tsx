@@ -6,9 +6,8 @@ import {
   ArrowRight, Zap, Shield, Trophy, 
   ChevronDown, Activity, Flame, Calendar, 
   Camera, Megaphone, Laptop, PenTool, ArrowUpRight, Ticket,
-  Quote, CheckCircle2, BarChart3, Users2
+  Quote, CheckCircle2, BarChart3, Users2, MapPin
 } from 'lucide-react';
-import TimelinePage from './TimelinePage';
 import HallOfFamePage from './HallOfFamePage';
 import { Event, Achievement, EventStatus } from '../types';
 
@@ -72,13 +71,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
 
   const smoothYProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
-  const heroTextY = useTransform(smoothYProgress, [0, 0.2], [0, -150]);
+  const heroTextY = useTransform(smoothYProgress, [0, 0.2], [0, -100]);
   const heroTextOpacity = useTransform(smoothYProgress, [0, 0.2], [1, 0]);
-  const bgTextX = useTransform(smoothYProgress, [0, 0.4], [0, -500]);
-  const modelY = useTransform(smoothYProgress, [0, 0.4], [0, 100]);
+  const bgTextX = useTransform(smoothYProgress, [0, 0.4], [0, -300]);
   const dumbbellRotate = useTransform(smoothYProgress, [0, 0.6], [0, 1080]);
-  const dumbbellScale = useTransform(smoothYProgress, [0, 0.15, 0.3], [1, 1.6, 0.8]);
-  const dumbbellY = useTransform(smoothYProgress, [0, 0.4], [0, 300]);
 
   useEffect(() => {
     if (location.state && (location.state as any).scrollTo) {
@@ -94,254 +90,120 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
   }, [location]);
 
   const upcomingEvents = events.filter(e => 
-    e.status === EventStatus.UPCOMING || 
-    e.status === EventStatus.REGISTRATION_OPEN || 
-    e.status === EventStatus.ONGOING
+    e.status !== EventStatus.COMPLETED
   );
 
   return (
-    <div ref={containerRef} className="w-full bg-[#020617] selection:bg-emerald-500 selection:text-black">
-      <div className="fixed inset-0 pointer-events-none z-[100] opacity-10 mix-blend-overlay">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-      </div>
-
-      <section className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-emerald-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-blue-500/10 blur-[120px] rounded-full" />
+    <div ref={containerRef} className="w-full bg-[#020617]">
+      {/* Hero Section - Condensed */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-12">
+        <div className="absolute top-[-5%] left-[-5%] w-[50vw] h-[50vw] bg-emerald-500/10 blur-[100px] rounded-full" />
         
-        <motion.div 
-          style={{ x: bgTextX }}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0"
-        >
-          <span className="text-[30vw] font-black text-white/[0.02] uppercase leading-none whitespace-nowrap italic tracking-tighter">
-            VIT CHENNAI VIT CHENNAI VIT CHENNAI
+        <motion.div style={{ x: bgTextX }} className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
+          <span className="text-[25vw] font-black text-white/[0.01] uppercase leading-none whitespace-nowrap italic tracking-tighter">
+            ELITE ELITE ELITE
           </span>
         </motion.div>
 
-        <div className="container mx-auto px-6 relative z-10 max-w-7xl h-full flex items-center">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
-            <motion.div 
-              style={{ y: heroTextY, opacity: heroTextOpacity }}
-              className="lg:col-span-7 flex flex-col items-start text-left"
-            >
-              <motion.div 
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                className="inline-flex items-center space-x-3 bg-white/5 border border-white/10 px-6 py-2.5 rounded-full mb-8 backdrop-blur-xl"
-              >
+        <div className="container mx-auto px-6 relative z-10 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <motion.div style={{ y: heroTextY, opacity: heroTextOpacity }} className="lg:col-span-7">
+              <div className="inline-flex items-center space-x-3 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full mb-6">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">VIT CHENNAI OFFICIAL STUDENT CLUB</span>
-              </motion.div>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-400">VIT Chennai Official</span>
+              </div>
               
-              <h1 className="text-6xl md:text-[9rem] font-black tracking-tighter mb-2 leading-[0.85] uppercase">
-                {config.hero_title.split('.').map((part, i) => (
-                  <React.Fragment key={i}>
-                    {part}{i === 0 && config.hero_title.includes('.') && <br />}
-                  </React.Fragment>
-                ))}
+              <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-4 leading-[0.85] uppercase">
+                {config.hero_title || 'FITNESS CLUB.'}
               </h1>
               
-              <p className="text-lg md:text-xl text-slate-400 max-w-xl mb-12 font-medium leading-relaxed mt-6">
+              <p className="text-base md:text-lg text-slate-400 max-w-lg mb-8 font-medium leading-relaxed">
                 {config.hero_subtitle}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-6">
-                <Link to="/contact" className="group relative px-12 py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-tight transition-all hover:scale-105 shadow-[0_20px_40px_rgba(16,185,129,0.2)]">
-                  <span className="relative z-10 flex items-center justify-center">
-                    Join the Club <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-                  </span>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/contact" className="px-8 py-4 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-tight transition-all hover:scale-105 shadow-xl shadow-emerald-500/20 flex items-center justify-center">
+                  Join Now <ArrowRight className="ml-2" size={18} />
                 </Link>
-                <button 
-                  onClick={() => document.getElementById('upcoming')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="px-12 py-6 border border-white/10 rounded-2xl font-black uppercase tracking-tight hover:bg-white/5 transition-all backdrop-blur-md flex items-center justify-center"
-                >
-                  See Events <ChevronDown size={20} className="ml-2" />
+                <button onClick={() => document.getElementById('upcoming')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase tracking-tight hover:bg-white/5 transition-all">
+                  Browse Events
                 </button>
               </div>
             </motion.div>
 
-            <motion.div style={{ y: modelY }} className="lg:col-span-5 relative hidden lg:block">
-              <div className="relative group">
-                <div className="absolute -inset-4 bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                <div className="relative aspect-[3/4] rounded-[60px] overflow-hidden border border-white/10 glass-card">
-                  <img 
-                    src={config.hero_image} 
-                    className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:scale-110 transition-all duration-1000"
-                    alt="Campus Athlete"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
-                  <div className="absolute bottom-12 left-12">
-                    <p className="text-emerald-500 font-black text-xs uppercase tracking-[0.4em] mb-2">Campus Athleticism</p>
-                    <h3 className="text-4xl font-black uppercase tracking-tighter italic text-white">CLUB ELITE</h3>
-                  </div>
-                </div>
+            <div className="lg:col-span-5 relative hidden lg:block">
+              <div className="aspect-[4/5] rounded-[40px] overflow-hidden border border-white/10 relative group shadow-2xl">
+                <img src={config.hero_image} className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 transition-all duration-1000" alt="Hero" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
-
-        <motion.div 
-          style={{ rotateZ: dumbbellRotate, scale: dumbbellScale, y: dumbbellY }} 
-          className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 w-[300px] md:w-[600px] opacity-80"
-        >
-          <img 
-            src="https://pngimg.com/uploads/dumbbell/dumbbell_PNG16382.png" 
-            className="w-full h-auto drop-shadow-[0_80px_60px_rgba(16,185,129,0.4)] contrast-150 brightness-110 saturate-0"
-            alt="3D Dumbbell"
-          />
-        </motion.div>
       </section>
 
-      <section className="py-48 relative overflow-hidden">
+      {/* Protocol Section - Condensed */}
+      <section className="py-16 relative overflow-hidden">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="space-y-12"
-            >
-              <div>
-                <div className="flex items-center space-x-3 text-emerald-500 mb-6 font-black uppercase tracking-[0.5em] text-[10px]">
-                  <Activity size={16} />
-                  <span>The Protocol</span>
-                </div>
-                <h2 className="text-6xl md:text-[8rem] font-black uppercase tracking-tighter leading-[0.8] mb-12 italic">
-                  WHAT WE <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>EXECUTE.</span>
-                </h2>
-                <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl">
-                  {config.about_description}
-                </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-6">
+              <div className="flex items-center space-x-3 text-emerald-500 font-black uppercase tracking-[0.5em] text-[9px]">
+                <Activity size={14} />
+                <span>The Protocol</span>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] italic">
+                BEYOND <br /><span className="text-emerald-500">LIMITS.</span>
+              </h2>
+              <p className="text-base text-slate-400 font-medium leading-relaxed max-w-lg">
+                {config.about_description}
+              </p>
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 {[
-                  { title: 'Data Driven', icon: BarChart3, desc: 'We track biomechanics and progress telemetry to ensure every lift is optimized.' },
-                  { title: 'Peer Led', icon: Users2, desc: 'Mentorship by campus record-holders and seasoned student athletes.' },
-                  { title: 'Standardized', icon: Shield, desc: 'Implementing international powerlifting and fitness standards in all meets.' },
-                  { title: 'Peak Output', icon: Flame, desc: 'Pushing the boundaries of human potential through community grit.' }
+                  { title: 'Scientific', icon: BarChart3 },
+                  { title: 'Peer-Led', icon: Users2 }
                 ].map((item, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="flex items-center space-x-3 text-emerald-500 font-black uppercase tracking-widest text-[10px]">
-                      <item.icon size={16} />
-                      <span>{item.title}</span>
-                    </div>
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                  <div key={i} className="flex items-center space-x-3 text-white font-black uppercase tracking-widest text-[10px]">
+                    <div className="p-2 bg-white/5 rounded-lg text-emerald-500"><item.icon size={14} /></div>
+                    <span>{item.title}</span>
                   </div>
                 ))}
               </div>
             </motion.div>
-
-            <div className="relative">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="relative z-10 rounded-[60px] overflow-hidden border border-white/5 glass-card aspect-square lg:aspect-auto lg:h-[700px]"
-              >
-                <img 
-                  src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=1200" 
-                  className="w-full h-full object-cover grayscale brightness-50 contrast-125"
-                  alt="Philosophy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
-                
-                <div className="absolute inset-12 flex flex-col justify-end">
-                  <div className="p-8 backdrop-blur-3xl bg-white/5 border border-white/10 rounded-[40px] space-y-6">
-                    <Quote className="text-emerald-500/20" size={64} />
-                    <p className="text-2xl font-black italic uppercase tracking-tighter leading-tight text-white">
-                      "Success isn't always about greatness. It's about consistency. Consistent hard work gains success. Greatness will come."
-                    </p>
-                    <div className="h-px w-full bg-white/10" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Core Philosophy</span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500">Fitness Club V4</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-              <div className="absolute -top-12 -right-12 w-64 h-64 border-4 border-dashed border-emerald-500/10 rounded-full animate-spin-slow pointer-events-none" />
+            <div className="aspect-[16/10] rounded-[32px] overflow-hidden border border-white/10 shadow-xl">
+              <img src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=1200" className="w-full h-full object-cover grayscale brightness-75" alt="Action" />
             </div>
           </div>
         </div>
       </section>
 
-      <section id="upcoming" className="py-48 relative overflow-hidden bg-slate-950/80">
+      {/* Upcoming Events - Standardized Cards */}
+      <section id="upcoming" className="py-16 bg-white/[0.01]">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
-            <div className="max-w-3xl">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="flex items-center space-x-3 text-emerald-500 mb-6 font-black uppercase tracking-[0.6em] text-[9px]"
-              >
-                <div className="w-8 h-px bg-emerald-500/30" />
-                <span>Live Feed</span>
-              </motion.div>
-              <motion.h2 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-6xl md:text-[8rem] font-black uppercase tracking-tighter italic leading-[0.8]"
-              >
-                LIVE & <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>UPCOMING.</span>
-              </motion.h2>
+          <div className="flex justify-between items-end mb-10">
+            <div>
+               <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic">LIVE FEED.</h2>
+               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 mt-2">REAL-TIME CAMPUS OPS</p>
             </div>
-            <div className="flex flex-col items-end">
-              <p className="text-slate-500 font-black text-right text-xs uppercase tracking-widest mb-4">Current Active Cycles: {upcomingEvents.length}</p>
-              <Link to="/timeline" className="flex items-center space-x-3 px-8 py-4 glass-card border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all">
-                <span>View Full Roadmap</span>
-                <ArrowRight size={14} />
-              </Link>
-            </div>
+            <Link to="/timeline" className="text-emerald-500 font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform mb-2">
+              Full Roadmap <ArrowRight size={14} />
+            </Link>
           </div>
-
-          <div className="flex overflow-x-auto pb-12 gap-8 no-scrollbar snap-x">
-            {upcomingEvents.map((event, idx) => (
-              <motion.div 
-                key={event.id}
-                initial={{ opacity: 0, scale: 0.9, x: 50 }}
-                whileInView={{ opacity: 1, scale: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.15, duration: 0.8 }}
-                className="flex-shrink-0 w-[85vw] md:w-[600px] snap-center"
-              >
-                <div className="group relative aspect-[16/10] md:aspect-[1.8/1] rounded-[48px] overflow-hidden border border-white/5 glass-card shadow-2xl transition-all duration-700 hover:border-emerald-500/30">
-                  <img src={event.banner} className="absolute inset-0 w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:scale-110 group-hover:opacity-60 transition-all duration-1000" alt="" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                  
-                  <div className="absolute top-10 left-10 flex flex-wrap gap-4">
-                    <div className={`flex items-center space-x-2 px-6 py-2 rounded-full border backdrop-blur-3xl font-black text-[10px] uppercase tracking-widest ${
-                      event.status === EventStatus.REGISTRATION_OPEN 
-                        ? 'bg-emerald-500 text-black border-emerald-400' 
-                        : 'bg-white/5 text-emerald-400 border-white/10'
-                    }`}>
-                      {event.status === EventStatus.ONGOING && <div className="w-2 h-2 rounded-full bg-red-500 animate-ping mr-2" />}
-                      {event.status}
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {upcomingEvents.slice(0, 3).map((event) => (
+              <motion.div key={event.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="group">
+                <div className="aspect-[16/10] rounded-[28px] overflow-hidden border border-white/5 relative mb-4 shadow-xl">
+                  <img src={event.banner} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt={event.title} />
+                  <div className="absolute top-4 left-4 bg-emerald-500 text-black text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                    {event.status}
                   </div>
-
-                  <div className="absolute bottom-10 left-10 right-10">
-                    <div className="flex items-center space-x-4 mb-6 text-slate-400">
-                      <div className="flex items-center space-x-2">
-                        <Calendar size={14} className="text-emerald-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{new Date(event.date).toDateString()}</span>
-                      </div>
-                    </div>
-
-                    <h3 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.8] mb-8 group-hover:italic transition-all">
-                      {event.title}
-                    </h3>
-
-                    <div className="flex items-center justify-between">
-                       <button className="flex items-center space-x-3 px-10 py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-500 transition-all hover:scale-105 active:scale-95 shadow-xl">
-                          <span>Register Now</span>
-                          <Ticket size={16} />
-                       </button>
-                    </div>
+                </div>
+                <h3 className="text-xl font-black uppercase tracking-tight mb-2 group-hover:text-emerald-500 transition-colors truncate">{event.title}</h3>
+                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed h-8 mb-4 opacity-80">{event.description}</p>
+                <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                  <div className="flex items-center space-x-2 text-slate-600">
+                    <MapPin size={12} className="text-emerald-500" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">{new Date(event.date).toDateString()}</span>
                   </div>
+                  <Ticket size={16} className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </motion.div>
             ))}
@@ -349,121 +211,48 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
         </div>
       </section>
 
-      <section id="departments" className="py-48 relative bg-slate-950/50">
+      {/* Core Units - Condensed */}
+      <section id="departments" className="py-16">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-12">
-            <div className="max-w-2xl">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="flex items-center space-x-3 text-emerald-500 mb-6 font-black uppercase tracking-[0.6em] text-[9px]"
-              >
-                <PenTool size={14} />
-                <span>The Engine Room</span>
-              </motion.div>
-              <motion.h2 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-6xl md:text-[9rem] font-black uppercase tracking-tighter italic leading-[0.8]"
-              >
-                CORE <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>UNITS.</span>
-              </motion.h2>
-            </div>
-            <p className="text-slate-500 font-medium text-lg max-w-xs border-l border-white/10 pl-8 mb-4">
-              Our operations are split into four high-performance units, each managing a critical pillar of our campus presence.
-            </p>
+          <div className="mb-10">
+            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic mb-4">CORE UNITS.</h2>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Architects of High Performance</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
-            {DEPARTMENTS.map((dept, idx) => (
-              <motion.div 
-                key={dept.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1, duration: 0.8 }}
-                className="group relative min-h-[560px] lg:h-[600px] rounded-[50px] overflow-hidden glass-card border-white/5 cursor-pointer shadow-2xl"
-              >
-                <motion.img 
-                  src={dept.img} 
-                  className="absolute inset-0 w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-1000 ease-out" 
-                  alt={dept.name} 
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent group-hover:via-slate-950/20 transition-all duration-700`} />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
-                  <span className="text-[15rem] font-black uppercase rotate-[-90deg] text-white/[0.03] group-hover:text-white/[0.05] transition-all duration-700 tracking-tighter">
-                    {dept.id}
-                  </span>
-                </div>
-                <div className="absolute inset-10 lg:inset-12 flex flex-col justify-between z-10">
-                  <div className="flex items-start justify-between">
-                    <div 
-                      className="p-6 rounded-3xl backdrop-blur-3xl border border-white/10 bg-white/5 transition-all duration-500 group-hover:scale-110"
-                      style={{ boxShadow: `0 0 30px ${dept.glow}` }}
-                    >
-                      <dept.icon size={36} className="text-white" />
-                    </div>
-                    <ArrowUpRight className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" size={36} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {DEPARTMENTS.map((dept) => (
+              <div key={dept.id} className="group relative aspect-[16/9] rounded-[28px] overflow-hidden border border-white/5 p-8 flex flex-col justify-end shadow-xl">
+                <img src={dept.img} className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.25] group-hover:scale-105 transition-transform duration-700" alt={dept.name} />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-emerald-500 rounded-lg text-black"><dept.icon size={16} /></div>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-white">{dept.name}</h3>
                   </div>
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <h3 className={`text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-none transition-all duration-500 group-hover:italic bg-gradient-to-r ${dept.color} bg-clip-text group-hover:text-transparent`}>
-                        {dept.name}
-                      </h3>
-                      <p className="text-slate-400 font-medium max-w-sm group-hover:text-white transition-colors duration-500 leading-relaxed">
-                        {dept.desc}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-700 delay-100">
-                      {dept.scope.map((s, si) => (
-                        <div key={si} className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 text-[8px] font-black uppercase tracking-widest text-white/70">
-                          <CheckCircle2 size={10} className="text-emerald-500" />
-                          <span>{s}</span>
-                        </div>
-                      ))}
-                    </div>
+                  <p className="text-[11px] text-slate-400 max-w-xs mb-4 line-clamp-2 font-medium">{dept.desc}</p>
+                  <div className="flex gap-2">
+                    {dept.scope.slice(0, 2).map((s, i) => (
+                      <span key={i} className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-white/5 border border-white/10 rounded-md text-slate-500">{s}</span>
+                    ))}
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-48 bg-slate-900/10 relative">
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
-           <div className="flex flex-col items-center text-center mb-36">
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                whileInView={{ scale: 1, opacity: 1 }}
-                className="p-4 bg-emerald-500/10 rounded-full mb-8 text-emerald-500 border border-emerald-500/20"
-              >
-                <Calendar size={32} />
-              </motion.div>
-              <h3 className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter leading-none mb-4">THE PATH.</h3>
-              <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-xs">Event Roadmap 2024</p>
-           </div>
-           <TimelinePage events={events} />
-        </div>
-      </section>
-
-      <section className="py-48 relative overflow-hidden">
-        <div className="container mx-auto px-6 max-w-7xl">
-           <div className="flex flex-col lg:flex-row justify-between items-end mb-36 gap-12">
-              <div className="max-w-3xl">
-                 <div className="flex items-center space-x-3 text-yellow-500 mb-6 font-black uppercase tracking-[0.4em] text-xs">
-                    <Trophy size={18} fill="currentColor" />
-                    <span>The Wall of Honor</span>
-                 </div>
-                 <h3 className="text-6xl md:text-9xl font-black uppercase tracking-tighter leading-[0.85]">CAMPUS <br /><span className="text-transparent" style={{ WebkitTextStroke: '2px #eab308' }}>LEGENDS.</span></h3>
               </div>
-              <Link to="/hall-of-fame" className="px-10 py-5 glass-card border-white/10 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-yellow-500 hover:text-black transition-all hover:scale-105">
-                Full Records
-              </Link>
-           </div>
-           <HallOfFamePage hallOfFame={hallOfFame} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Hall of Fame - Featured */}
+      <section className="py-16 bg-slate-900/10 border-t border-white/5">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="flex justify-between items-end mb-10">
+            <div>
+               <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic">CHAMPIONS.</h2>
+               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-500 mt-2">ELITE ATHLETIC RECORD</p>
+            </div>
+            <Link to="/hall-of-fame" className="text-yellow-500 font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:scale-105 transition-all mb-2">
+              All Records <Trophy size={14} />
+            </Link>
+          </div>
+          <HallOfFamePage hallOfFame={hallOfFame.filter(h => h.featured)} config={config} />
         </div>
       </section>
     </div>

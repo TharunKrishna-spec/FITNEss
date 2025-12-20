@@ -1,299 +1,198 @@
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useRef, useState } from 'react';
+import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Event, EventStatus } from '../types';
-import { ChevronRight, Calendar, MapPin, Zap, Flame, Clock, Globe, X, ExternalLink, Info } from 'lucide-react';
+import { ChevronRight, Calendar, MapPin, Zap, Flame, X, Info } from 'lucide-react';
 
 interface Props {
   events: Event[];
+  config?: Record<string, string>;
 }
 
-const TimelinePage: React.FC<Props> = ({ events }) => {
+const TimelinePage: React.FC<Props> = ({ events, config }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const allEventsSorted = [...events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  // Targeted scroll tracking for the specific list container
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 30%", "end 70%"]
+  });
+
+  const scaleY = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   return (
-    <div className="relative max-w-7xl mx-auto px-4 py-24 overflow-hidden">
-      {/* Dynamic Background Line */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none opacity-20">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-full bg-gradient-to-b from-emerald-500 via-emerald-500/20 to-transparent" />
+    <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-32 overflow-hidden">
+      {/* Page Header */}
+      <div className="mb-24 relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="flex items-center space-x-3 text-emerald-500 mb-4 font-black uppercase tracking-[0.6em] text-[10px]"
+        >
+          <div className="w-10 h-px bg-emerald-500/30" />
+          <span>Operational Roadmap</span>
+        </motion.div>
+        <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter italic leading-[0.85] text-white">
+          {config?.events_title || 'LIVE FEED.'}
+        </h2>
       </div>
 
-      <div className="relative z-10 space-y-40 lg:space-y-48">
-        {allEventsSorted.map((event, idx) => {
-          const isCompleted = event.status === EventStatus.COMPLETED;
-          const isOngoing = event.status === EventStatus.ONGOING || event.status === EventStatus.REGISTRATION_OPEN;
-          
-          return (
-            <motion.div 
-              key={event.id}
-              initial={{ opacity: 0, y: 60, scale: 0.98 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className={`relative flex flex-col md:flex-row items-center gap-12 lg:gap-28 ${idx % 2 === 0 ? 'md:flex-row-reverse' : ''}`}
-            >
-              {/* Central Timeline Node */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:flex items-center justify-center z-30">
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
-                  className={`w-14 h-14 rounded-2xl border-[3px] border-slate-950 rotate-45 flex items-center justify-center transition-all duration-700 ${
-                    isOngoing 
-                      ? 'bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.5)]' 
-                      : 'bg-slate-900 border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-                  }`}
-                >
-                   <div className="-rotate-45">
-                     {isCompleted ? <Zap size={20} className="text-slate-400" /> : <Flame size={20} className="text-black animate-pulse" />}
-                   </div>
-                </motion.div>
-              </div>
+      {/* Timeline Wrapper - Acts as the constrained boundary for the line */}
+      <div ref={containerRef} className="relative">
+        {/* The Spine - Constraints applied to parent relative container */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] z-0 hidden md:block">
+          <div className="absolute inset-0 bg-white/5" />
+          <motion.div 
+            className="absolute top-0 w-full bg-emerald-500 shadow-[0_0_20px_#10b981]"
+            style={{ 
+              height: '100%', 
+              scaleY, 
+              originY: 0
+            }}
+          />
+        </div>
 
-              {/* Enhanced Content Card */}
-              <div className="flex-1 w-full group">
-                <motion.div 
-                  onClick={() => setSelectedEvent(event)}
-                  whileHover={{ 
-                    y: -12,
-                    scale: 1.02,
-                    borderColor: "rgba(16, 185, 129, 0.3)"
-                  }}
-                  className="glass-card rounded-[48px] p-10 md:p-14 border-white/5 hover:bg-white/[0.03] transition-all duration-500 relative overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] cursor-pointer"
-                >
-                  {/* Glowing Highlight */}
-                  <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 blur-[60px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-700" />
+        <div className="relative z-10 space-y-32 md:space-y-48">
+          {allEventsSorted.map((event, idx) => {
+            const isCompleted = event.status === EventStatus.COMPLETED;
+            const isOngoing = event.status === EventStatus.ONGOING || event.status === EventStatus.REGISTRATION_OPEN;
+            const isEven = idx % 2 === 0;
+            
+            // Calculate relative progress point for this item to trigger node highlight
+            const itemProgressStart = idx / allEventsSorted.length;
 
-                  {/* Top Meta Info */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
-                    <div className="flex items-center space-x-3">
-                      <motion.span 
-                        animate={isOngoing ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                        className={`text-[9px] font-black uppercase tracking-[0.25em] px-6 py-2.5 rounded-full border shadow-sm ${
-                          isOngoing 
-                            ? 'bg-emerald-500 text-black border-emerald-400 font-black' 
-                            : 'bg-white/5 text-slate-500 border-white/10'
-                        }`}
-                      >
+            return (
+              <div key={event.id} className="relative flex flex-col md:flex-row items-center justify-between group">
+                {/* Central Timeline Node */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:flex items-center justify-center z-30">
+                  <Node idx={idx} progress={scrollYProgress} isOngoing={isOngoing} isCompleted={isCompleted} total={allEventsSorted.length} />
+                </div>
+
+                {/* Card Container */}
+                <motion.div 
+                  initial={{ opacity: 0, x: isEven ? -60 : 60 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ type: "spring", stiffness: 80, damping: 20, delay: 0.1 }}
+                  className={`flex-1 w-full md:w-auto ${isEven ? 'md:pr-20' : 'md:pl-20 md:order-2'}`}
+                >
+                  <div 
+                    onClick={() => setSelectedEvent(event)}
+                    className="glass-card rounded-[40px] p-8 md:p-10 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group/card shadow-2xl relative overflow-hidden h-full"
+                  >
+                    <div className="flex items-center justify-between mb-8">
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border ${
+                        isOngoing ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-white/5 text-slate-500 border-white/10'
+                      }`}>
                         {event.status}
-                      </motion.span>
-                      {isOngoing && (
-                        <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                      )}
+                      </span>
+                      <div className="flex items-center space-x-2 text-slate-600">
+                        <Calendar size={12} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{new Date(event.date).toDateString()}</span>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-5">
-                       <div className="flex items-center space-x-2.5 text-slate-500 group-hover:text-emerald-400 transition-colors">
-                          <Calendar size={14} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">
-                            {new Date(event.date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </span>
-                       </div>
-                    </div>
-                  </div>
 
-                  {/* Content Body */}
-                  <div className="space-y-6">
-                    <h3 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-none italic group-hover:not-italic group-hover:text-emerald-500 transition-all duration-700">
+                    <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-4 group-hover/card:text-emerald-500 transition-colors leading-none italic">
                       {event.title}
                     </h3>
                     
-                    <p className="text-slate-400 leading-relaxed text-lg font-medium max-w-xl group-hover:text-slate-300 transition-colors line-clamp-2">
+                    <p className="text-slate-400 text-sm font-medium leading-relaxed line-clamp-2 h-10 mb-8 opacity-80">
                       {event.description}
                     </p>
-                  </div>
 
-                  {/* Refined Footer Grid */}
-                  <div className="mt-12 pt-12 border-t border-white/5 flex flex-wrap items-center justify-between gap-8">
-                    <div className="flex items-center space-x-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2.5 bg-white/5 rounded-xl group-hover:bg-emerald-500/10 transition-colors">
-                          <MapPin size={18} className="text-emerald-500" />
-                        </div>
-                        <div>
-                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Location</p>
-                          <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Outdoor Stadium, VIT-C</p>
-                        </div>
+                    <div className="flex items-center justify-between pt-8 border-t border-white/5">
+                      <div className="flex items-center space-x-3 text-slate-600">
+                        <MapPin size={14} className="text-emerald-500" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em]">Campus Arena</span>
                       </div>
-                      
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2.5 bg-white/5 rounded-xl group-hover:bg-emerald-500/10 transition-colors">
-                          <Globe size={18} className="text-blue-500" />
-                        </div>
-                        <div>
-                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Access</p>
-                          <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Open to All Students</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2 text-emerald-500 font-black text-[9px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span>View Details</span>
-                      <ChevronRight size={14} />
+                      <ChevronRight size={18} className="text-emerald-500 opacity-0 group-hover/card:opacity-100 transition-all" />
                     </div>
                   </div>
                 </motion.div>
-              </div>
 
-              {/* Visual Component - Immersive Frame */}
-              <div className="flex-1 w-full hidden md:block">
-                 <motion.div 
-                   onClick={() => setSelectedEvent(event)}
-                   whileHover={{ scale: 1.03 }}
-                   className="relative aspect-[16/11] rounded-[48px] overflow-hidden border border-white/10 group cursor-pointer shadow-2xl"
-                 >
+                {/* Media Block */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9, x: isEven ? 60 : -60 }}
+                  whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className={`flex-1 hidden md:block ${isEven ? 'md:order-2 md:pl-20' : 'md:pr-20'}`}
+                >
+                  <div className="aspect-[16/10] rounded-[40px] overflow-hidden border border-white/5 relative group/img shadow-2xl">
                     <img 
                       src={event.banner} 
-                      className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000 ease-out" 
-                      alt={event.title} 
+                      className="w-full h-full object-cover grayscale opacity-40 group-hover/img:grayscale-0 group-hover/img:opacity-100 transition-all duration-1000" 
+                      alt="" 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
-                    
-                    {/* Floating Accent Badge */}
-                    <div className="absolute top-8 right-8">
-                       <div className="p-4 rounded-2xl bg-slate-950/80 backdrop-blur-xl border border-white/10 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                          <Clock className="text-emerald-500" size={24} />
-                       </div>
-                    </div>
-
-                    {/* Centered Interaction Indicator */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
-                       <div className="bg-emerald-500 text-black p-8 rounded-full shadow-[0_0_60px_rgba(16,185,129,0.5)] scale-75 group-hover:scale-100 transition-transform">
-                          <Zap size={36} fill="currentColor" />
-                       </div>
-                    </div>
-
-                    {/* Bottom Label */}
-                    <div className="absolute bottom-10 left-10">
-                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1">Press Ready</p>
-                      <p className="text-xl font-black text-white uppercase italic">ARCHIVE_V2.0</p>
-                    </div>
-                 </motion.div>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
-      {/* Event Details Modal */}
+      {/* Modal Engine */}
       <AnimatePresence>
         {selectedEvent && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-12">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/98 backdrop-blur-2xl" 
-              onClick={() => setSelectedEvent(null)} 
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 40 }}
-              className="relative w-full max-w-6xl h-full lg:h-auto max-h-[90vh] glass-card rounded-[60px] border-white/10 overflow-hidden shadow-2xl flex flex-col lg:flex-row"
-            >
-              {/* Close Button */}
-              <button 
-                onClick={() => setSelectedEvent(null)}
-                className="absolute top-8 right-8 p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-white transition-all z-20 backdrop-blur-md"
-              >
-                <X size={24} />
-              </button>
-
-              {/* Banner Area */}
-              <div className="w-full lg:w-1/2 h-64 lg:h-auto relative overflow-hidden">
-                <img 
-                  src={selectedEvent.banner} 
-                  className="w-full h-full object-cover grayscale brightness-50"
-                  alt="" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-slate-950 via-transparent to-transparent" />
-                <div className="absolute bottom-10 left-10 lg:bottom-16 lg:left-16">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-3 bg-emerald-500 rounded-2xl text-black">
-                      <Zap size={24} fill="currentColor" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500">Official Club Event</span>
-                  </div>
-                  <h2 className="text-4xl lg:text-7xl font-black uppercase tracking-tighter leading-none italic text-white">{selectedEvent.title}</h2>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/98 backdrop-blur-2xl" onClick={() => setSelectedEvent(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl glass-card rounded-[48px] border-white/10 overflow-hidden shadow-2xl flex flex-col md:flex-row">
+              <button onClick={() => setSelectedEvent(null)} className="absolute top-8 right-8 p-3 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 z-20"><X size={24} /></button>
+              <div className="w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden">
+                <img src={selectedEvent.banner} className="w-full h-full object-cover grayscale brightness-50" alt="" />
+                <div className="absolute bottom-10 left-10">
+                  <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter leading-none italic text-white">{selectedEvent.title}</h2>
                 </div>
               </div>
-
-              {/* Content Area */}
-              <div className="flex-1 p-10 lg:p-20 overflow-y-auto bg-slate-900/40">
-                <div className="space-y-12">
-                  <div className="flex flex-wrap gap-10">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Event Date</span>
-                      <div className="flex items-center space-x-2 text-white">
-                        <Calendar size={16} className="text-emerald-500" />
-                        <span className="text-xl font-black uppercase tracking-tight">{new Date(selectedEvent.date).toDateString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Access Type</span>
-                      <div className="flex items-center space-x-2 text-white">
-                        <Globe size={16} className="text-blue-500" />
-                        <span className="text-xl font-black uppercase tracking-tight">Open Entry</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Status</span>
-                      <div className="flex items-center space-x-2 text-emerald-500">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-xl font-black uppercase tracking-tight">{selectedEvent.status}</span>
-                      </div>
-                    </div>
+              <div className="p-10 lg:p-16 md:w-1/2 bg-slate-900/40 space-y-10 overflow-y-auto max-h-[80vh]">
+                <div className="grid grid-cols-2 gap-8 border-b border-white/5 pb-10">
+                  <div>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Schedule</p>
+                    <p className="text-lg font-black text-white">{new Date(selectedEvent.date).toDateString()}</p>
                   </div>
-
-                  <div className="prose prose-invert max-w-none">
-                    <div className="flex items-center space-x-3 text-slate-400 mb-4">
-                      <Info size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Brief Overview</span>
-                    </div>
-                    <p className="text-2xl text-slate-300 leading-relaxed font-medium">
-                      {selectedEvent.description}
-                    </p>
-                  </div>
-
-                  <div className="bg-white/5 border border-white/5 p-8 rounded-[40px] space-y-6">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Department Guidelines</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center text-emerald-500 border border-white/5">
-                           <Clock size={18} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-white uppercase tracking-tight">Report Time</p>
-                          <p className="text-xs text-slate-400">Please arrive 30 mins early for briefings.</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-4">
-                        <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center text-blue-500 border border-white/5">
-                           <MapPin size={18} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-white uppercase tracking-tight">Venue Check</p>
-                          <p className="text-xs text-slate-400">Indoor Sports Complex, Main Floor.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-8">
-                    <button className="w-full py-6 bg-white text-black rounded-[24px] font-black uppercase tracking-widest text-[10px] hover:bg-emerald-500 transition-all hover:scale-105 active:scale-95 shadow-xl">
-                      Register Interest
-                    </button>
+                  <div>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Status</p>
+                    <p className="text-lg font-black text-emerald-500 uppercase">{selectedEvent.status}</p>
                   </div>
                 </div>
+                <p className="text-xl text-slate-300 leading-relaxed font-medium">{selectedEvent.description}</p>
+                <button className="w-full py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-400 transition-all shadow-xl">Join the Event</button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
     </div>
+  );
+};
+
+// Sub-component for a scroll-reactive node
+const Node = ({ idx, progress, isOngoing, isCompleted, total }: { idx: number, progress: any, isOngoing: boolean, isCompleted: boolean, total: number }) => {
+  // Nodes activate slightly before their center position for a better feel
+  const threshold = idx / (total - 1);
+  const nodeActive = useTransform(progress, [threshold - 0.05, threshold + 0.05], [0, 1]);
+  const nodeColor = useTransform(nodeActive, [0, 1], ["rgba(30, 41, 59, 1)", "rgba(16, 185, 129, 1)"]);
+  const nodeScale = useTransform(nodeActive, [0, 1], [0.8, 1.2]);
+  const glowOpacity = useTransform(nodeActive, [0, 1], [0, 0.5]);
+
+  return (
+    <motion.div 
+      style={{ backgroundColor: nodeColor, scale: nodeScale }}
+      className={`w-12 h-12 rounded-2xl border-[3px] border-slate-950 rotate-45 flex items-center justify-center transition-shadow duration-500`}
+    >
+       <motion.div style={{ opacity: glowOpacity }} className="absolute inset-[-8px] bg-emerald-500 blur-xl rounded-full pointer-events-none" />
+       <div className="-rotate-45 relative z-10">
+         {isCompleted ? <Zap size={16} className="text-slate-500" /> : <Flame size={18} className={isOngoing ? "text-black animate-pulse" : "text-slate-400"} />}
+       </div>
+    </motion.div>
   );
 };
 

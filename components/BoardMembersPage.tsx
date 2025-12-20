@@ -7,9 +7,10 @@ import { FloatingDock } from './FloatingDock';
 
 interface Props {
   profiles: Profile[];
+  config?: Record<string, string>;
 }
 
-const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
+const BoardMembersPage: React.FC<Props> = ({ profiles, config }) => {
   const [activeTab, setActiveTab] = useState<Role | 'All'>('All');
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
@@ -44,6 +45,8 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
     },
   ];
 
+  const boardTitle = config?.board_title || 'THE BOARD.';
+
   return (
     <div className="relative min-h-screen bg-[#020617] pb-48">
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -67,7 +70,11 @@ const BoardMembersPage: React.FC<Props> = ({ profiles }) => {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-8 leading-[0.8] italic"
           >
-            THE <br /><span className="text-transparent" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.15)' }}>BOARD.</span>
+            {boardTitle.split('.').map((part, i) => (
+              <React.Fragment key={i}>
+                {part}{i === 0 && boardTitle.includes('.') && <br />}
+              </React.Fragment>
+            ))}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
