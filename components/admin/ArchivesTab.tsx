@@ -19,20 +19,46 @@ const ArchivesTab: React.FC<Props> = ({ hallOfFame, setHallOfFame }) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
-    const id = editing.id || generateId();
-    
-    const payload = {
-      ...editing,
-      ...data,
+    const id = editing?.id || generateId();
+
+    const payloadDb = {
       id,
-      featured: !!data.featured
+      athlete_name: (data.athleteName as string)?.trim(),
+      category: (data.category as string)?.trim(),
+      event_name: (data.eventName as string)?.trim(),
+      year: (data.year as string)?.trim(),
+      position: data.position as PodiumPosition,
+      athlete_img: (data.athleteImg as string)?.trim(),
+      stat: (data.stat as string)?.trim(),
+      featured: Boolean(data.featured)
     };
 
-    const { error } = await supabase.from('hall_of_fame').upsert(payload);
-    if (!error) {
-      setHallOfFame(editing.id ? hallOfFame.map(h => h.id === id ? payload : h) : [...hallOfFame, payload]);
-      setEditing(null);
+    if (!payloadDb.athlete_name || !payloadDb.category || !payloadDb.event_name || !payloadDb.year || !payloadDb.athlete_img) {
+      alert('Please fill all required fields');
+      return;
     }
+
+    const { error } = await supabase.from('hall_of_fame').upsert(payloadDb);
+    if (error) {
+      alert(`Save failed: ${error.message}`);
+      console.error('hall_of_fame upsert error', error);
+      return;
+    }
+
+    const payloadUi: Achievement = {
+      id,
+      athleteName: payloadDb.athlete_name,
+      category: payloadDb.category,
+      eventName: payloadDb.event_name,
+      year: payloadDb.year,
+      position: payloadDb.position,
+      athleteImg: payloadDb.athlete_img,
+      stat: payloadDb.stat,
+      featured: payloadDb.featured,
+    };
+
+    setHallOfFame(editing?.id ? hallOfFame.map(h => h.id === id ? payloadUi : h) : [...hallOfFame, payloadUi]);
+    setEditing(null);
   };
 
   return (
@@ -74,7 +100,10 @@ const ArchivesTab: React.FC<Props> = ({ hallOfFame, setHallOfFame }) => {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-slate-950/98 backdrop-blur-3xl" onClick={() => setEditing(null)} />
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full max-w-2xl glass-card rounded-[48px] p-12 border-white/10 shadow-2xl">
-            <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-10 leading-none">Record Archive</h3>
+            <div className="flex items-start justify-between mb-10">
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none">Record Archive</h3>
+              <button type="button" onClick={() => setEditing(null)} className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all">✕</button>
+            </div>
             <form onSubmit={saveAchievement} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>

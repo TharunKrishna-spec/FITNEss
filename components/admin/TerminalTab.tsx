@@ -1,27 +1,73 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Profile } from '../../types';
-import { Scan, Terminal, ShieldAlert, Check, Keyboard, Activity, UserCheck, Crosshair } from 'lucide-react';
+import { Scan, Terminal, ShieldAlert, Check, Keyboard, Activity, UserCheck, Crosshair, Flashlight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsQR from 'jsqr';
+import { supabase } from '../../supabaseClient';
+
+interface Registration {
+  id: string;
+  name: string;
+  reg_number: string;
+  created_at: string;
+}
 
 const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
   const [scanResult, setScanResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [manual, setManual] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [scanMessage, setScanMessage] = useState('');
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [isFileLoading, setIsFileLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load registrations from Supabase
+  useEffect(() => {
+    loadRegistrations();
+  }, []);
+
+  const loadRegistrations = async () => {
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error loading registrations:', error);
+    } else if (data) {
+      console.log('Loaded registrations:', data);
+      setRegistrations(data);
+    }
+  };
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    
+    let mounted = true;
+
     const start = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
         });
+
+        if (!mounted) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+
+        streamRef.current = stream;
+
+        const [track] = stream.getVideoTracks();
+        const caps: any = track.getCapabilities ? track.getCapabilities() : {};
+        setTorchAvailable(!!caps.torch);
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.setAttribute('playsinline', 'true');
@@ -31,16 +77,34 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
           };
         }
       } catch (err) { 
-        console.error("Terminal Error: Camera access denied."); 
+        console.error("Terminal Error: Camera access denied.", err); 
+        setScanMessage('Camera access denied. Allow camera permission.');
         setIsScanning(false);
       }
+    };
+
+    const decodeWithFallback = (imageData: ImageData) => {
+      const primary = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+      if (primary) return primary;
+
+      // Center crop fallback for small / low-contrast codes
+      const side = Math.floor(Math.min(imageData.width, imageData.height) * 0.7);
+      const sx = Math.floor((imageData.width - side) / 2);
+      const sy = Math.floor((imageData.height - side) / 2);
+      const off = document.createElement('canvas');
+      off.width = side;
+      off.height = side;
+      const offCtx = off.getContext('2d', { willReadFrequently: true });
+      if (!offCtx) return null;
+      offCtx.putImageData(imageData, -sx, -sy);
+      const cropped = offCtx.getImageData(0, 0, side, side);
+      return jsQR(cropped.data, cropped.width, cropped.height, { inversionAttempts: 'attemptBoth' });
     };
 
     const scan = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // CRITICAL: Check dimensions and readyState to prevent IndexSizeError
       if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
         const vw = video.videoWidth;
         const vh = video.videoHeight;
@@ -55,11 +119,10 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
           if (ctx) {
             ctx.drawImage(video, 0, 0, vw, vh);
             const imageData = ctx.getImageData(0, 0, vw, vh);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-              inversionAttempts: 'attemptBoth',
-            });
+            const code = decodeWithFallback(imageData);
             
             if (code && code.data) {
+              setScanMessage('Code detected');
               handleIdentify(code.data);
             }
           }
@@ -72,8 +135,9 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
     requestRef.current = requestAnimationFrame(scan);
 
     return () => {
+      mounted = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     };
   }, []);
 
@@ -87,18 +151,44 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
     // Throttle: don't process same code twice within 4 seconds
     if (ident === lastIdentified.current && now - lastScanTime.current < 4000) return;
 
-    // Search logic: check reg_no and ID
-    const profile = profiles.find(p => {
+    // Search logic: First check profiles (board members, etc.)
+    let profile = profiles.find(p => {
       const pReg = (p.reg_no || "").trim().toUpperCase();
       const pId = (p.id || "").trim().toUpperCase();
       return pReg === ident || pId === ident;
     });
 
+    // If not found in profiles, check registrations table
+    let registration = null;
+    if (!profile) {
+      registration = registrations.find(r => {
+        const rReg = (r.reg_number || "").trim().toUpperCase();
+        const rId = (r.id || "").trim().toUpperCase();
+        return rReg === ident || rId === ident;
+      });
+      
+      // Create a profile-like object from registration for display
+      if (registration) {
+        profile = {
+          id: registration.id,
+          name: registration.name,
+          reg_no: registration.reg_number,
+          position: 'Registered Member',
+          role: 'FFCS Member' as any,
+          tenure: '',
+          photo: '',
+          bio: '',
+          socials: {}
+        } as Profile;
+      }
+    }
+
     const result = { 
       profile, 
       raw: ident, 
       ts: new Date().toLocaleTimeString(), 
-      status: profile ? 'VALID' : 'INVALID' 
+      status: profile ? 'VALID' : 'INVALID',
+      isRegistration: !!registration
     };
 
     setScanResult(result);
@@ -110,6 +200,9 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
     if (profile) {
       new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3').play().catch(() => {});
       if ('vibrate' in navigator) navigator.vibrate(200);
+      setScanMessage('Validated');
+    } else {
+      setScanMessage('Not found');
     }
 
     setTimeout(() => {
@@ -131,6 +224,65 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
           <div className={`w-2 h-2 rounded-full ${isScanning ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
           <span className="text-[10px] font-black uppercase tracking-widest">{isScanning ? 'Sensor Online' : 'Sensor Offline'}</span>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3 items-center text-sm text-slate-400">
+        <button
+          onClick={() => {
+            const track = streamRef.current?.getVideoTracks()[0];
+            if (!track || !torchAvailable) return;
+            const next = !torchOn;
+            track.applyConstraints({ advanced: [{ torch: next }] }).catch(() => {});
+            setTorchOn(next);
+          }}
+          disabled={!torchAvailable}
+          className={`px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest flex items-center gap-2 ${torchAvailable ? 'border-white/10 text-white hover:border-emerald-500/40' : 'border-white/5 text-slate-600 cursor-not-allowed'}`}
+        >
+          <Flashlight size={14} /> {torchAvailable ? (torchOn ? 'Torch On' : 'Torch Off') : 'Torch Unavailable'}
+        </button>
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="px-4 py-2 rounded-xl border border-white/10 text-xs font-black uppercase tracking-widest hover:border-emerald-500/40 flex items-center gap-2"
+        >
+          Upload QR Image
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setIsFileLoading(true);
+            const img = new Image();
+            img.onload = () => {
+              const canvas = canvasRef.current;
+              if (!canvas) return;
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d', { willReadFrequently: true });
+              if (!ctx) return;
+              ctx.drawImage(img, 0, 0);
+              const data = ctx.getImageData(0, 0, img.width, img.height);
+              const code = jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
+              if (code?.data) {
+                setScanMessage('Code detected from image');
+                handleIdentify(code.data);
+              } else {
+                setScanMessage('No code found in image');
+              }
+              setIsFileLoading(false);
+            };
+            img.onerror = () => {
+              setIsFileLoading(false);
+              setScanMessage('Could not read image');
+            };
+            img.src = URL.createObjectURL(file);
+          }}
+        />
+        {scanMessage && <span className="text-xs text-slate-500">{scanMessage}{isFileLoading ? ' (processing...)' : ''}</span>}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">

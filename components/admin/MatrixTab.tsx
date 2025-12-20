@@ -28,6 +28,15 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
     }
   }, [selectedEventId]);
 
+  // Recompute totals when schema changes (e.g., after adding metrics) so existing rows don't lose totals
+  useEffect(() => {
+    if (!schema.length) return;
+    setScores(prev => prev.map(row => {
+      const total = recomputeTotal(row.data);
+      return { ...row, total };
+    }));
+  }, [schema]);
+
   const fetchScores = async (id: string) => {
     setIsLoading(true);
     try {
@@ -77,19 +86,36 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
     }
   };
 
+  const recomputeTotal = (rowData: Record<string, any>) => {
+    let total = 0;
+    schema.forEach(c => {
+      if (c.isTotalComponent) {
+        const n = Number(rowData[c.id] ?? 0);
+        total += Number.isFinite(n) ? n : 0;
+      }
+    });
+    return total;
+  };
+
   const updateScoreValue = (id: string, colId: string, val: string) => {
-    const numVal = Number(val);
     setScores(prev => prev.map(s => {
       if (s.id === id) {
-        const newData = { ...s.data, [colId]: numVal };
-        let total = 0;
-        schema.forEach(c => {
-          if (c.isTotalComponent) total += Number(newData[c.id] || 0);
-        });
+        const col = schema.find(c => c.id === colId);
+        const parsed = col?.type === 'number' ? Number(val) : val;
+        const newData = { ...s.data, [colId]: parsed };
+        const total = recomputeTotal(newData);
         return { ...s, data: newData, total };
       }
       return s;
     }));
+  };
+
+  const makeEmptyRow = () => {
+    const baseData: Record<string, any> = {};
+    schema.forEach(c => {
+      baseData[c.id] = c.type === 'number' ? 0 : '';
+    });
+    return { id: generateId(), event_id: selectedEventId, athlete_name: 'ATHLETE NAME', data: baseData, total: recomputeTotal(baseData) };
   };
 
   return (
@@ -126,12 +152,15 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
 
       {selectedEventId ? (
         <div className="space-y-10">
-          <div className="flex gap-4">
-            <button onClick={() => setScores([...scores, { id: generateId(), event_id: selectedEventId, athlete_name: "ATHLETE NAME", data: {}, total: 0 }])} className="flex items-center gap-4 bg-white/5 hover:bg-emerald-500 hover:text-black px-10 py-6 rounded-[32px] text-[10px] font-black uppercase transition-all border border-white/5">
+          <div className="flex flex-wrap gap-4">
+            <button onClick={() => setScores([...scores, makeEmptyRow()])} className="flex items-center gap-3 bg-white/5 hover:bg-emerald-500 hover:text-black px-8 py-5 rounded-[24px] text-[10px] font-black uppercase transition-all border border-white/5">
               <UserPlus size={18} /> Add Athlete
             </button>
-            <button onClick={() => setIsSchemaOpen(true)} className="flex items-center gap-4 bg-white/5 hover:bg-slate-800 px-10 py-6 rounded-[32px] text-[10px] font-black uppercase transition-all border border-white/5">
+            <button onClick={() => setIsSchemaOpen(true)} className="flex items-center gap-3 bg-white/5 hover:bg-slate-800 px-8 py-5 rounded-[24px] text-[10px] font-black uppercase transition-all border border-white/5">
               <Settings2 size={18} /> Matrix Schema
+            </button>
+            <button onClick={() => selectedEventId && fetchScores(selectedEventId)} disabled={isLoading} className="flex items-center gap-3 bg-white/5 hover:bg-white/10 px-8 py-5 rounded-[24px] text-[10px] font-black uppercase transition-all border border-white/5 disabled:opacity-60">
+              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <TableIcon size={18} />} Pull Latest
             </button>
           </div>
 
@@ -148,7 +177,7 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.03]">
-                  {scores.sort((a,b) => b.total - a.total).map((s, idx) => (
+                  {[...scores].sort((a,b) => b.total - a.total).map((s, idx) => (
                     <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="p-10"><span className={`text-4xl font-black italic ${idx < 3 ? 'text-yellow-500' : 'text-slate-800'}`}>#{(idx + 1)}</span></td>
                       <td className="p-10">
@@ -156,7 +185,12 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
                       </td>
                       {schema.map(c => (
                         <td key={c.id} className="p-10 text-center">
-                          <input type="number" value={s.data[c.id] || ''} onChange={e => updateScoreValue(s.id, c.id, e.target.value)} className="bg-slate-900 border border-white/5 rounded-2xl px-6 py-4 text-center text-emerald-400 font-mono text-2xl outline-none w-28 focus:border-emerald-500" />
+                          <input 
+                            type={c.type === 'number' ? 'number' : 'text'} 
+                            value={s.data[c.id] ?? ''} 
+                            onChange={e => updateScoreValue(s.id, c.id, e.target.value)} 
+                            className="bg-slate-900 border border-white/5 rounded-2xl px-6 py-4 text-center text-emerald-400 font-mono text-2xl outline-none w-36 focus:border-emerald-500" 
+                          />
                         </td>
                       ))}
                       <td className="p-10 text-center text-5xl font-black text-yellow-500 italic">{s.total}</td>
@@ -168,7 +202,7 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
                 </tbody>
               </table>
             </div>
-            {scores.length === 0 && <div className="py-40 text-center text-slate-800 uppercase tracking-widest font-black italic">Grid Unpopulated</div>}
+            {scores.length === 0 && <div className="py-24 text-center text-slate-700 uppercase tracking-[0.5em] font-black italic border-t border-white/5">No athletes yet</div>}
           </div>
         </div>
       ) : (
@@ -190,12 +224,12 @@ const MatrixTab: React.FC<{ events: Event[] }> = ({ events }) => {
                   <div key={col.id} className="p-6 bg-white/[0.03] border border-white/5 rounded-[32px] flex items-center justify-between">
                     <div>
                       <p className="text-xl font-black text-white italic uppercase">{col.name}</p>
-                      <p className="text-[9px] font-black uppercase text-emerald-500 tracking-widest">{col.isTotalComponent ? 'Aggregating to Total' : 'Metadata Only'}</p>
+                      <p className="text-[9px] font-black uppercase text-emerald-500 tracking-widest">{col.type} • {col.isTotalComponent ? 'Aggregates' : 'Reference'}</p>
                     </div>
                     <button onClick={() => setSchema(schema.filter(c => c.id !== col.id))} className="p-4 bg-red-500/10 text-red-500 rounded-xl"><Trash2 size={20} /></button>
                   </div>
                 ))}
-                <button onClick={() => { const n = prompt("Metric Name?"); if(n) setSchema([...schema, { id: Math.random().toString(36).substr(2, 9), name: n.toUpperCase(), type: 'number', isTotalComponent: true }]); }} className="w-full py-6 border-2 border-dashed border-white/5 rounded-[32px] text-[11px] font-black uppercase text-slate-600 hover:text-white transition-all">Append Metric</button>
+                <button onClick={() => { const n = prompt("Metric Name?"); if(n) setSchema([...schema, { id: Math.random().toString(36).substr(2, 9), name: n.toUpperCase(), type: 'number', isTotalComponent: true }]); }} className="w-full py-6 border-2 border-dashed border-white/5 rounded-[32px] text-[11px] font-black uppercase text-slate-600 hover:text-white transition-all">Append Metric (number, counts to total)</button>
               </div>
               <button onClick={() => setIsSchemaOpen(false)} className="w-full py-8 bg-emerald-500 text-black rounded-[32px] font-black uppercase tracking-widest text-[11px]">Save Schema Architecture</button>
             </motion.div>

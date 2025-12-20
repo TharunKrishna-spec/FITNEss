@@ -4,7 +4,7 @@ import { Profile, Event, Achievement } from '../types';
 import { 
   LayoutDashboard, Users, Calendar, Trophy, Settings, Scan, 
   Terminal, ShieldCheck, Database, RefreshCw, LogOut, ChevronRight, Zap,
-  AlertCircle
+  AlertCircle, Megaphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
@@ -16,6 +16,11 @@ import CyclesTab from './admin/CyclesTab';
 import MatrixTab from './admin/MatrixTab';
 import TerminalTab from './admin/TerminalTab';
 import ArchivesTab from './admin/ArchivesTab';
+import ContentTab from './admin/ContentTab';
+import CoreUnitsTab from './admin/CoreUnitsTab';
+import AnnouncementsTab from './admin/AnnouncementsTab';
+import TestimonialsTab from './admin/TestimonialsTab';
+import FAQTab from './admin/FAQTab';
 
 interface Props {
   profiles: Profile[];
@@ -25,7 +30,7 @@ interface Props {
   hallOfFame: Achievement[];
   setHallOfFame: (h: Achievement[]) => void;
   siteConfig: Record<string, string>;
-  setSiteConfig: (c: Record<string, string>) => void;
+  setSiteConfig: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
 const AdminDashboard: React.FC<Props> = ({ 
@@ -34,7 +39,7 @@ const AdminDashboard: React.FC<Props> = ({
   hallOfFame, setHallOfFame,
   siteConfig, setSiteConfig 
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'profiles' | 'events' | 'hall' | 'scoring' | 'scanner'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'profiles' | 'events' | 'hall' | 'scoring' | 'scanner' | 'content' | 'core' | 'announcements' | 'testimonials' | 'faq'>('overview');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const seedDatabase = async () => {
@@ -75,40 +80,71 @@ const AdminDashboard: React.FC<Props> = ({
   const isSystemEmpty = profiles.length === 0 && events.length === 0;
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-[#020617] pt-28">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#020617] pt-28 pb-16 gap-8 lg:gap-0">
       {/* Navigation Sidebar */}
-      <aside className="w-full lg:w-80 bg-slate-900/20 backdrop-blur-3xl border-r border-white/5 p-8 lg:fixed lg:top-24 lg:bottom-0 overflow-y-auto no-scrollbar">
-        <div className="mb-10 hidden lg:block">
+      <aside className="w-full lg:w-80 bg-slate-900/20 backdrop-blur-3xl border-r border-white/5 p-8 lg:sticky lg:top-24 lg:h-[calc(100vh-6rem)] lg:flex-shrink-0 overflow-y-auto no-scrollbar flex flex-col">
+        <div className="mb-8 hidden lg:block">
            <div className="flex items-center space-x-3 mb-2">
              <Terminal size={20} className="text-emerald-500" />
              <span className="text-xl font-black uppercase italic text-white tracking-tighter">HIGH<span className="text-emerald-500">COMMAND</span></span>
            </div>
            <p className="text-[8px] text-slate-600 font-black uppercase tracking-[0.4em]">Auth Level: Administrator</p>
         </div>
+
+        <div className="glass-card border border-white/5 rounded-3xl p-4 mb-6 text-[11px] text-slate-300">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-black uppercase tracking-[0.2em]">System Pulse</span>
+            <span className="flex items-center gap-2 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />Online</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500">
+            <div className="space-y-1">
+              <p className="uppercase tracking-widest">Profiles</p>
+              <p className="text-white font-black text-lg leading-none">{profiles.length}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="uppercase tracking-widest">Cycles</p>
+              <p className="text-white font-black text-lg leading-none">{events.length}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="uppercase tracking-widest">Archives</p>
+              <p className="text-white font-black text-lg leading-none">{hallOfFame.length}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="uppercase tracking-widest">Matrix</p>
+              <p className="text-white font-black text-lg leading-none">Live</p>
+            </div>
+          </div>
+        </div>
         
-        <nav className="space-y-1">
+        <nav className="space-y-1 flex-1">
           <SidebarBtn id="overview" label="Dashboard" icon={LayoutDashboard} />
           <SidebarBtn id="profiles" label="Registry" icon={Users} />
           <SidebarBtn id="events" label="Cycles" icon={Calendar} />
           <SidebarBtn id="scoring" label="Matrix" icon={Zap} />
+          <SidebarBtn id="content" label="Content" icon={Settings} />
+          <SidebarBtn id="core" label="Core Units" icon={LayoutDashboard} />
+          <SidebarBtn id="announcements" label="Announcements" icon={Megaphone} />
+          <SidebarBtn id="testimonials" label="Testimonials" icon={Users} />
+          <SidebarBtn id="faq" label="FAQ" icon={ShieldCheck} />
           <SidebarBtn id="scanner" label="Terminal" icon={Scan} />
           <SidebarBtn id="hall" label="Archives" icon={Trophy} />
         </nav>
 
-        <div className="mt-20 pt-8 border-t border-white/5">
-          <button 
-            onClick={() => supabase.auth.signOut()}
-            className="w-full flex items-center space-x-4 px-6 py-4 text-red-500 hover:bg-red-500/10 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest"
-          >
-            <LogOut size={16} />
-            <span>Terminate Session</span>
-          </button>
+        <div className="pt-6 mt-6 border-t border-white/5 space-y-3">
+          <div className="glass-card border border-white/5 rounded-2xl p-4 text-[11px] text-slate-400 flex items-center justify-between">
+            <div>
+              <p className="uppercase tracking-widest">Storage</p>
+              <p className="text-white font-black text-base">Supabase</p>
+            </div>
+            <ShieldCheck size={16} className="text-emerald-500" />
+          </div>
         </div>
       </aside>
 
       {/* Content Area */}
-      <div className="flex-grow lg:ml-80 p-8 lg:p-12 w-full">
-        <AnimatePresence mode="wait">
+      <div className="flex-grow px-8 lg:px-0 w-full">
+        <div className="max-w-7xl mx-auto lg:px-12">
+          <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-12">
                <div className="flex justify-between items-end">
@@ -172,9 +208,15 @@ const AdminDashboard: React.FC<Props> = ({
           {activeTab === 'profiles' && <RegistryTab profiles={profiles} setProfiles={setProfiles} />}
           {activeTab === 'events' && <CyclesTab events={events} setEvents={setEvents} />}
           {activeTab === 'scoring' && <MatrixTab events={events} />}
+          {activeTab === 'content' && <ContentTab siteConfig={siteConfig} setSiteConfig={setSiteConfig} />}
+          {activeTab === 'core' && <CoreUnitsTab siteConfig={siteConfig} setSiteConfig={setSiteConfig} />}
+          {activeTab === 'announcements' && <AnnouncementsTab siteConfig={siteConfig} setSiteConfig={setSiteConfig} />}
+          {activeTab === 'testimonials' && <TestimonialsTab />}
+          {activeTab === 'faq' && <FAQTab />}
           {activeTab === 'scanner' && <TerminalTab profiles={profiles} />}
           {activeTab === 'hall' && <ArchivesTab hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} />}
         </AnimatePresence>
+        </div>
       </div>
     </div>
   );
