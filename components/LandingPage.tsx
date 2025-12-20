@@ -6,7 +6,7 @@ import {
   ArrowRight, Zap, Shield, Trophy, 
   ChevronDown, Activity, Flame, Calendar, 
   Camera, Megaphone, Laptop, PenTool, ArrowUpRight, Ticket,
-  Quote, CheckCircle2, BarChart3, Users2, MapPin
+  Quote, CheckCircle2, BarChart3, Users2, MapPin, Globe
 } from 'lucide-react';
 import HallOfFamePage from './HallOfFamePage';
 import { Event, Achievement, EventStatus } from '../types';
@@ -74,7 +74,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
   const heroTextY = useTransform(smoothYProgress, [0, 0.2], [0, -100]);
   const heroTextOpacity = useTransform(smoothYProgress, [0, 0.2], [1, 0]);
   const bgTextX = useTransform(smoothYProgress, [0, 0.4], [0, -300]);
-  const dumbbellRotate = useTransform(smoothYProgress, [0, 0.6], [0, 1080]);
 
   useEffect(() => {
     if (location.state && (location.state as any).scrollTo) {
@@ -95,13 +94,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
 
   return (
     <div ref={containerRef} className="w-full bg-[#020617]">
-      {/* Hero Section - Condensed */}
+      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-12">
         <div className="absolute top-[-5%] left-[-5%] w-[50vw] h-[50vw] bg-emerald-500/10 blur-[100px] rounded-full" />
         
         <motion.div style={{ x: bgTextX }} className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
           <span className="text-[25vw] font-black text-white/[0.01] uppercase leading-none whitespace-nowrap italic tracking-tighter">
-            ELITE ELITE ELITE
+            ATHLETIC ATHLETIC ATHLETIC
           </span>
         </motion.div>
 
@@ -125,8 +124,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
                 <Link to="/contact" className="px-8 py-4 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-tight transition-all hover:scale-105 shadow-xl shadow-emerald-500/20 flex items-center justify-center">
                   Join Now <ArrowRight className="ml-2" size={18} />
                 </Link>
-                <button onClick={() => document.getElementById('upcoming')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase tracking-tight hover:bg-white/5 transition-all">
-                  Browse Events
+                <button onClick={() => document.getElementById('who-are-we')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 border border-white/10 rounded-xl font-black uppercase tracking-tight hover:bg-white/5 transition-all">
+                  Who Are We?
                 </button>
               </div>
             </motion.div>
@@ -141,44 +140,53 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
         </div>
       </section>
 
-      {/* Protocol Section - Condensed */}
-      <section className="py-16 relative overflow-hidden">
+      {/* NEW: Who Are We Section */}
+      <section id="who-are-we" className="py-24 relative overflow-hidden border-y border-white/5 bg-white/[0.01]">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-6">
-              <div className="flex items-center space-x-3 text-emerald-500 font-black uppercase tracking-[0.5em] text-[9px]">
-                <Activity size={14} />
-                <span>The Protocol</span>
-              </div>
-              <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] italic">
-                BEYOND <br /><span className="text-emerald-500">LIMITS.</span>
-              </h2>
-              <p className="text-base text-slate-400 font-medium leading-relaxed max-w-lg">
-                {config.about_description}
-              </p>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                {[
-                  { title: 'Scientific', icon: BarChart3 },
-                  { title: 'Peer-Led', icon: Users2 }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center space-x-3 text-white font-black uppercase tracking-widest text-[10px]">
-                    <div className="p-2 bg-white/5 rounded-lg text-emerald-500"><item.icon size={14} /></div>
-                    <span>{item.title}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="relative">
+              <div className="absolute -top-20 -left-20 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full" />
+              <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-8 relative z-10">
+                <div className="flex items-center space-x-3 text-emerald-500 font-black uppercase tracking-[0.5em] text-[10px]">
+                  <Globe size={14} />
+                  <span>The Origin Story</span>
+                </div>
+                <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] italic">
+                  WHO <br />ARE <span className="text-emerald-500">WE?</span>
+                </h2>
+                <div className="space-y-6">
+                  <p className="text-lg text-slate-300 font-medium leading-relaxed">
+                    Fitness Club VIT Chennai is the premier athletic high-command on campus. We bridge the gap between casual training and scientific performance.
+                  </p>
+                  <p className="text-slate-400 leading-relaxed italic">
+                    From organizing the legendary 'Campus Clash' to providing biomechanical feedback for FFCS members, we are the architects of physical excellence.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-8 pt-4">
+                  <div>
+                    <p className="text-3xl font-black text-white">500+</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Active Members</p>
                   </div>
-                ))}
-              </div>
-            </motion.div>
-            <div className="aspect-[16/10] rounded-[32px] overflow-hidden border border-white/10 shadow-xl">
-              <img src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=1200" className="w-full h-full object-cover grayscale brightness-75" alt="Action" />
+                  <div>
+                    <p className="text-3xl font-black text-emerald-500">10+</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Annual Events</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+            <div className="relative">
+               <div className="aspect-square rounded-[60px] overflow-hidden border border-white/10 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700">
+                  <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200" className="w-full h-full object-cover grayscale brightness-50 hover:grayscale-0 transition-all duration-700" alt="Culture" />
+               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Upcoming Events - Standardized Cards */}
-      <section id="upcoming" className="py-16 bg-white/[0.01]">
+      {/* Upcoming Events */}
+      <section id="upcoming" className="py-24">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex justify-between items-end mb-10">
+          <div className="flex justify-between items-end mb-12">
             <div>
                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic">LIVE FEED.</h2>
                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 mt-2">REAL-TIME CAMPUS OPS</p>
@@ -187,23 +195,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
               Full Roadmap <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {upcomingEvents.slice(0, 3).map((event) => (
               <motion.div key={event.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="group">
-                <div className="aspect-[16/10] rounded-[28px] overflow-hidden border border-white/5 relative mb-4 shadow-xl">
+                <div className="aspect-[16/10] rounded-[32px] overflow-hidden border border-white/5 relative mb-6 shadow-xl">
                   <img src={event.banner} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt={event.title} />
-                  <div className="absolute top-4 left-4 bg-emerald-500 text-black text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                  <div className="absolute top-6 left-6 bg-emerald-500 text-black text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
                     {event.status}
                   </div>
                 </div>
-                <h3 className="text-xl font-black uppercase tracking-tight mb-2 group-hover:text-emerald-500 transition-colors truncate">{event.title}</h3>
-                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed h-8 mb-4 opacity-80">{event.description}</p>
-                <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                <h3 className="text-2xl font-black uppercase tracking-tight mb-3 group-hover:text-emerald-500 transition-colors truncate">{event.title}</h3>
+                <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed h-10 mb-6">{event.description}</p>
+                <div className="flex items-center justify-between border-t border-white/5 pt-6">
                   <div className="flex items-center space-x-2 text-slate-600">
-                    <MapPin size={12} className="text-emerald-500" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">{new Date(event.date).toDateString()}</span>
+                    <MapPin size={14} className="text-emerald-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{new Date(event.date).toDateString()}</span>
                   </div>
-                  <Ticket size={16} className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Ticket size={20} className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </motion.div>
             ))}
@@ -211,26 +219,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
         </div>
       </section>
 
-      {/* Core Units - Condensed */}
-      <section id="departments" className="py-16">
+      {/* Core Units */}
+      <section id="departments" className="py-24 bg-white/[0.01] border-y border-white/5">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="mb-10">
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic mb-4">CORE UNITS.</h2>
-            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Architects of High Performance</p>
+          <div className="mb-16">
+            <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter italic mb-4">CORE UNITS.</h2>
+            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">Architects of High Performance</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {DEPARTMENTS.map((dept) => (
-              <div key={dept.id} className="group relative aspect-[16/9] rounded-[28px] overflow-hidden border border-white/5 p-8 flex flex-col justify-end shadow-xl">
+              <div key={dept.id} className="group relative aspect-[16/9] rounded-[40px] overflow-hidden border border-white/5 p-10 flex flex-col justify-end shadow-xl">
                 <img src={dept.img} className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.25] group-hover:scale-105 transition-transform duration-700" alt={dept.name} />
                 <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-emerald-500 rounded-lg text-black"><dept.icon size={16} /></div>
-                    <h3 className="text-2xl font-black uppercase tracking-tight text-white">{dept.name}</h3>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-emerald-500 rounded-xl text-black shadow-lg shadow-emerald-500/20"><dept.icon size={20} /></div>
+                    <h3 className="text-3xl font-black uppercase tracking-tight text-white">{dept.name}</h3>
                   </div>
-                  <p className="text-[11px] text-slate-400 max-w-xs mb-4 line-clamp-2 font-medium">{dept.desc}</p>
-                  <div className="flex gap-2">
-                    {dept.scope.slice(0, 2).map((s, i) => (
-                      <span key={i} className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-white/5 border border-white/10 rounded-md text-slate-500">{s}</span>
+                  <p className="text-sm text-slate-400 max-w-sm mb-6 line-clamp-2 font-medium leading-relaxed">{dept.desc}</p>
+                  <div className="flex gap-3">
+                    {dept.scope.slice(0, 3).map((s, i) => (
+                      <span key={i} className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-slate-500">{s}</span>
                     ))}
                   </div>
                 </div>
@@ -240,16 +248,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ events, hallOfFame, config })
         </div>
       </section>
 
-      {/* Hall of Fame - Featured */}
-      <section className="py-16 bg-slate-900/10 border-t border-white/5">
+      {/* Hall of Fame Featured */}
+      <section className="py-24 bg-slate-900/10">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex justify-between items-end mb-10">
+          <div className="flex justify-between items-end mb-16">
             <div>
-               <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic">CHAMPIONS.</h2>
+               <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter italic">CHAMPIONS.</h2>
                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-yellow-500 mt-2">ELITE ATHLETIC RECORD</p>
             </div>
-            <Link to="/hall-of-fame" className="text-yellow-500 font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:scale-105 transition-all mb-2">
-              All Records <Trophy size={14} />
+            <Link to="/hall-of-fame" className="text-yellow-500 font-black uppercase text-[11px] tracking-widest flex items-center gap-2 hover:scale-105 transition-all mb-4 border-b-2 border-yellow-500/20 pb-1">
+              All Records <Trophy size={16} />
             </Link>
           </div>
           <HallOfFamePage hallOfFame={hallOfFame.filter(h => h.featured)} config={config} />

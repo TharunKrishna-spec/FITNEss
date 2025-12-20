@@ -2,7 +2,8 @@
 export enum Role {
   BOARD = 'Board Member',
   LEAD = 'Lead',
-  ALUMNI = 'Alumni'
+  ALUMNI = 'Alumni',
+  MEMBER = 'FFCS Member'
 }
 
 export interface Profile {
@@ -10,6 +11,7 @@ export interface Profile {
   name: string;
   role: Role;
   position: string;
+  reg_no?: string; // VIT Registration Number
   tenure: string;
   photo: string;
   bio: string;
@@ -76,9 +78,4 @@ export interface Achievement {
   stat?: string;
   year: string;
   featured: boolean;
-}
-
-export interface UserRole {
-  isAdmin: boolean;
-  type: 'Super Admin' | 'Content Admin' | 'Event Manager' | 'User';
 }
