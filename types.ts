@@ -30,6 +30,22 @@ export enum EventStatus {
   ONGOING = 'Ongoing'
 }
 
+export interface ScoreColumn {
+  id: string;
+  name: string;
+  type: 'number' | 'text' | 'time';
+  isTotalComponent: boolean;
+}
+
+export interface EventScore {
+  id: string;
+  event_id: string;
+  athlete_name: string;
+  data: Record<string, any>;
+  total: number;
+  rank?: number;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -40,6 +56,7 @@ export interface Event {
   gallery?: string[];
   results?: string;
   is_featured?: boolean;
+  score_schema?: ScoreColumn[];
 }
 
 export enum PodiumPosition {
