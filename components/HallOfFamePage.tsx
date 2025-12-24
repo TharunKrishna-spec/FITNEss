@@ -15,7 +15,12 @@ const HallOfFamePage: React.FC<Props> = ({ hallOfFame, config }) => {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.98 },
-    show: (i: number) => ({ opacity: 1, y: 0, scale: 1, transition: { delay: 0.05 * i, type: 'spring', stiffness: 120, damping: 18 } }),
+    show: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { delay: 0.05 * i, type: 'spring' as const, stiffness: 120, damping: 18 },
+    }),
   };
 
   const hallTitle = config?.hall_title || 'HALL OF CHAMPIONS.';

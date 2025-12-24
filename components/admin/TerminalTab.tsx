@@ -232,7 +232,8 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
             const track = streamRef.current?.getVideoTracks()[0];
             if (!track || !torchAvailable) return;
             const next = !torchOn;
-            track.applyConstraints({ advanced: [{ torch: next }] }).catch(() => {});
+            // Torch is non-standard; cast constraints to keep type-checker happy while targeting supported browsers
+            track.applyConstraints({ advanced: [{ torch: next }] } as unknown as MediaTrackConstraints).catch(() => {});
             setTorchOn(next);
           }}
           disabled={!torchAvailable}
