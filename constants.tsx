@@ -4,37 +4,70 @@ import { Role, Profile, Event, EventStatus, Achievement, PodiumPosition } from '
 export const INITIAL_PROFILES: Profile[] = [
   {
     id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-    name: 'Aryan Sharma',
+    name: 'Vishnu Paandian',
     role: Role.BOARD,
-    position: 'Club President',
-    tenure: '2023 - 2024',
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400',
-    bio: 'Leading the vision of Fitness Club VIT Chennai. National-level powerlifter and final-year Computer Science student.',
+    position: 'Chair Person',
+    tenure: '2024 - 2025',
+    photo: '/core/vishnu.jpg',
+    bio: 'Leading the vision of Fitness Club VIT Chennai as Chair Person.',
     socials: { linkedin: '#', instagram: '#' },
-    achievements: ['Gold Medal - State Powerlifting 2023', 'VIT Sports Excellence Award'],
+    achievements: [],
     order_index: 1
   },
   {
     id: 'b27ac10b-58cc-4372-a567-0e02b2c3d480',
-    name: 'Ishaan Verma',
+    name: 'Mithun HS',
     role: Role.BOARD,
-    position: 'General Secretary',
-    tenure: '2023 - 2024',
+    position: 'Advisory',
+    tenure: '2024 - 2025',
     photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400',
-    bio: 'Managing club operations and inter-college tie-ups. Passionate about functional training.',
+    bio: 'Providing strategic guidance and advisory support to Fitness Club VIT Chennai.',
     socials: { linkedin: '#', instagram: '#' },
     order_index: 2
   },
   {
     id: 'c37ac10b-58cc-4372-a567-0e02b2c3d481',
-    name: 'Riya Kapoor',
-    role: Role.LEAD,
-    position: 'Technical Training Lead',
-    tenure: '2023 - 2024',
-    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400',
-    bio: 'Oversees the scientific training protocols for our junior members and transformation programs.',
-    socials: { instagram: '#' },
+    name: 'Shrri Dharshan',
+    role: Role.BOARD,
+    position: 'Co-Chair',
+    tenure: '2024 - 2025',
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400',
+    bio: 'Co-chairing operations and driving club initiatives forward.',
+    socials: { linkedin: '#', instagram: '#' },
     order_index: 3
+  },
+  {
+    id: 'd47ac10b-58cc-4372-a567-0e02b2c3d482',
+    name: 'Jivesh',
+    role: Role.BOARD,
+    position: 'Co-Chair',
+    tenure: '2024 - 2025',
+    photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400',
+    bio: 'Co-chairing operations and driving club initiatives forward.',
+    socials: { linkedin: '#', instagram: '#' },
+    order_index: 4
+  },
+  {
+    id: 'e57ac10b-58cc-4372-a567-0e02b2c3d483',
+    name: 'Vijay Shakthi',
+    role: Role.BOARD,
+    position: 'General Secretary',
+    tenure: '2024 - 2025',
+    photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400',
+    bio: 'Managing club operations and coordinating all secretarial activities.',
+    socials: { linkedin: '#', instagram: '#' },
+    order_index: 5
+  },
+  {
+    id: 'f67ac10b-58cc-4372-a567-0e02b2c3d484',
+    name: 'Vaanmathi',
+    role: Role.BOARD,
+    position: 'General Secretary',
+    tenure: '2024 - 2025',
+    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400',
+    bio: 'Managing club operations and coordinating all secretarial activities.',
+    socials: { linkedin: '#', instagram: '#' },
+    order_index: 6
   }
 ];
 
