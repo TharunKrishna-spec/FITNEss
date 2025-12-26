@@ -30,8 +30,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
             <ShieldAlert className="text-red-500 mx-auto mb-6" size={64} />
             <h2 className="text-3xl font-black uppercase mb-4 text-white">Something went wrong</h2>
             <p className="text-slate-400 mb-8">We're sorry for the inconvenience. Please refresh the page to try again.</p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="px-6 py-3 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-wider hover:bg-emerald-400 transition-all"
             >
               Refresh Page
@@ -48,11 +48,11 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 // Scroll to top component
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-  
+
   return null;
 };
 
@@ -107,11 +107,11 @@ import TermsOfServicePage from './components/TermsOfServicePage';
 const NavLink = ({ to, state, children, icon: Icon, onClick, scrolled, index }: any) => {
   const location = useLocation();
   const isActive = location.pathname === to && (!state || (location.state && location.state.scrollTo === state.scrollTo));
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8, y: 10 }}
-      animate={{ 
+      animate={{
         y: scrolled ? 0 : 4,
         scale: scrolled ? 1 : 0.98,
         opacity: 1
@@ -124,11 +124,10 @@ const NavLink = ({ to, state, children, icon: Icon, onClick, scrolled, index }: 
         to={to}
         state={state}
         onClick={onClick}
-        className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
-          isActive 
-            ? 'text-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
+        className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${isActive
+            ? 'text-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
             : 'text-slate-400 hover:text-white hover:bg-white/5'
-        }`}
+          }`}
       >
         {Icon && <Icon size={14} />}
         <span className="uppercase tracking-[0.2em] text-[9px] font-black">{children}</span>
@@ -196,13 +195,13 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogo
   return (
     <>
       <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} user={user} />
-      <motion.header 
+      <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1, paddingTop: scrolled ? '8px' : '20px', paddingBottom: scrolled ? '8px' : '20px' }}
         className="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none"
       >
         <div className="max-w-7xl w-full px-4 pointer-events-auto">
-          <motion.div 
+          <motion.div
             style={{ scale: headerScale }}
             animate={{
               backgroundColor: scrolled ? 'rgba(15, 23, 42, 0.85)' : 'rgba(15, 23, 42, 0)',
@@ -214,54 +213,54 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogo
           >
             <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-emerald-500/20 origin-center z-20" />
 
-          <Link to="/" className="flex items-center space-x-3 z-50">
-            <div className="p-2 bg-emerald-500 rounded-lg shadow-lg">
-              <Zap className="text-black" size={18} fill="currentColor" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
-              <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
-            </div>
-          </Link>
+            <Link to="/" className="flex items-center space-x-3 z-50">
+              <div className="p-2 bg-emerald-500 rounded-lg shadow-lg">
+                <Zap className="text-black" size={18} fill="currentColor" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
+                <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
+              </div>
+            </Link>
 
-          <nav className="hidden lg:flex items-center space-x-1">
-            <NavLink to="/" scrolled={scrolled} index={0}>Home</NavLink>
-            <NavLink to="/team" scrolled={scrolled} index={1}>Leadership</NavLink>
-            <NavLink to="/timeline" scrolled={scrolled} index={3}>Events</NavLink>
-            <NavLink to="/hall-of-fame" scrolled={scrolled} index={4}>Hall of Fame</NavLink>
-            <NavLink to="/join" scrolled={scrolled} index={5}>Join Us</NavLink>
-            <NavLink to="/calculator" scrolled={scrolled} index={6}>Calculator</NavLink>
-            {user && <NavLink to="/admin" icon={ShieldCheck} scrolled={scrolled} index={7}>Admin</NavLink>}
-          </nav>
+            <nav className="hidden lg:flex items-center space-x-1">
+              <NavLink to="/" scrolled={scrolled} index={0}>Home</NavLink>
+              <NavLink to="/team" scrolled={scrolled} index={1}>Leadership</NavLink>
+              <NavLink to="/timeline" scrolled={scrolled} index={3}>Events</NavLink>
+              <NavLink to="/hall-of-fame" scrolled={scrolled} index={4}>Hall of Fame</NavLink>
+              <NavLink to="/join" scrolled={scrolled} index={5}>Join Us</NavLink>
+              <NavLink to="/calculator" scrolled={scrolled} index={6}>Calculator</NavLink>
+              {user && <NavLink to="/admin" icon={ShieldCheck} scrolled={scrolled} index={7}>Admin</NavLink>}
+            </nav>
 
-          <div className="flex items-center space-x-4 z-50">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={openIDModal}
-              className="flex items-center space-x-2 bg-white/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-emerald-500 border border-emerald-500/20"
-            >
-              <CreditCard size={14} />
-              <span className="hidden sm:inline">Member ID</span>
-            </motion.button>
-            {user && (
-              <motion.button 
+            <div className="flex items-center space-x-4 z-50">
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onLogout}
-                className="flex items-center space-x-2 bg-red-500/10 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 border border-red-500/30"
+                onClick={openIDModal}
+                className="flex items-center space-x-2 bg-white/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-emerald-500 border border-emerald-500/20"
               >
-                <LogOut size={14} />
-                <span className="hidden sm:inline">Logout</span>
+                <CreditCard size={14} />
+                <span className="hidden sm:inline">Member ID</span>
               </motion.button>
-            )}
-            <motion.button className="lg:hidden p-2 text-slate-400" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </motion.button>
-          </div>
-        </motion.div>
-      </div>
-    </motion.header>
+              {user && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onLogout}
+                  className="flex items-center space-x-2 bg-red-500/10 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 border border-red-500/30"
+                >
+                  <LogOut size={14} />
+                  <span className="hidden sm:inline">Logout</span>
+                </motion.button>
+              )}
+              <motion.button className="lg:hidden p-2 text-slate-400" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      </motion.header>
     </>
   );
 };
@@ -335,9 +334,9 @@ const IDModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             <div className="space-y-6">
               {!showQR ? (
                 <>
-                  <input 
-                    type="text" 
-                    placeholder="ENTER REG NUMBER" 
+                  <input
+                    type="text"
+                    placeholder="ENTER REG NUMBER"
                     value={regNo}
                     onChange={(e) => setRegNo(e.target.value.toUpperCase())}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-center text-xl font-black tracking-[0.2em] outline-none focus:border-emerald-500/50 transition-all text-white"
@@ -401,7 +400,10 @@ const App: React.FC = () => {
           supabase.from('hall_of_fame').select('id, athlete_name, category, event_name, year, position, athlete_img, stat, featured'),
           supabase.from('site_config').select('*')
         ]);
-        if (p?.length) setProfiles(p);
+        if (p?.length) {
+          // Skip loading from database - use INITIAL_PROFILES from constants instead
+          // setProfiles(p);
+        }
         if (e?.length) setEvents(e);
         if (h?.length) {
           const mapped = h.map((rec: any) => ({
@@ -443,37 +445,37 @@ const App: React.FC = () => {
         <ScrollToTop />
         <BackToTop />
         <div className="min-h-screen flex flex-col bg-[#020617] text-slate-50">
-        <AnimatePresence>
-          {isLoading ? (
-            <motion.div exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#020617] flex items-center justify-center">
-              <Zap className="text-emerald-500 animate-pulse" size={48} />
-            </motion.div>
-          ) : (
-            <div className="flex flex-col min-h-screen relative">
-              <Header scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} user={user} openIDModal={() => setIsIDModalOpen(true)} onLogout={handleLogout} />
-              <IDModal isOpen={isIDModalOpen} onClose={() => setIsIDModalOpen(false)} />
-              <main className="flex-grow">
-                <Routes>
-                  <Route path="/" element={<LandingPage events={events} hallOfFame={hallOfFame} config={siteConfig} profiles={profiles} />} />
-                  <Route path="/team" element={<BoardMembersPage profiles={profiles} config={siteConfig} />} />
-                  <Route path="/timeline" element={<TimelinePage events={events} config={siteConfig} />} />
-                  <Route path="/hall-of-fame" element={<HallOfFamePage hallOfFame={hallOfFame} config={siteConfig} />} />
-                  <Route path="/join" element={<JoinPage config={siteConfig} profiles={profiles} />} />
-                  <Route path="/contact" element={<ContactPage config={siteConfig} />} />
-                  <Route path="/calculator" element={<CalculatorPage />} />
-                  <Route path="/login" element={<LoginPage onLogin={(email) => setUser(email)} />} />
-                  <Route path="/admin" element={user ? <AdminDashboard profiles={profiles} setProfiles={setProfiles} events={events} setEvents={setEvents} hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <Navigate to="/login" />} />
-                  <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                  <Route path="/terms" element={<TermsOfServicePage />} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </main>
-              <Footer user={user} config={siteConfig} />
-            </div>
-          )}
-        </AnimatePresence>
-      </div>
-    </HashRouter>
+          <AnimatePresence>
+            {isLoading ? (
+              <motion.div exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#020617] flex items-center justify-center">
+                <Zap className="text-emerald-500 animate-pulse" size={48} />
+              </motion.div>
+            ) : (
+              <div className="flex flex-col min-h-screen relative">
+                <Header scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} user={user} openIDModal={() => setIsIDModalOpen(true)} onLogout={handleLogout} />
+                <IDModal isOpen={isIDModalOpen} onClose={() => setIsIDModalOpen(false)} />
+                <main className="flex-grow">
+                  <Routes>
+                    <Route path="/" element={<LandingPage events={events} hallOfFame={hallOfFame} config={siteConfig} profiles={profiles} />} />
+                    <Route path="/team" element={<BoardMembersPage profiles={profiles} config={siteConfig} />} />
+                    <Route path="/timeline" element={<TimelinePage events={events} config={siteConfig} />} />
+                    <Route path="/hall-of-fame" element={<HallOfFamePage hallOfFame={hallOfFame} config={siteConfig} />} />
+                    <Route path="/join" element={<JoinPage config={siteConfig} profiles={profiles} />} />
+                    <Route path="/contact" element={<ContactPage config={siteConfig} />} />
+                    <Route path="/calculator" element={<CalculatorPage />} />
+                    <Route path="/login" element={<LoginPage onLogin={(email) => setUser(email)} />} />
+                    <Route path="/admin" element={user ? <AdminDashboard profiles={profiles} setProfiles={setProfiles} events={events} setEvents={setEvents} hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <Navigate to="/login" />} />
+                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                    <Route path="/terms" element={<TermsOfServicePage />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                  </Routes>
+                </main>
+                <Footer user={user} config={siteConfig} />
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      </HashRouter>
     </ErrorBoundary>
   );
 };
