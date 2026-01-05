@@ -187,7 +187,7 @@ const MobileMenu = ({ isOpen, onClose, user }: any) => (
   </AnimatePresence>
 );
 
-const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogout }: any) => {
+const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogout, config }: any) => {
   const { scrollYProgress } = useScroll();
   const headerScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.98]);
 
@@ -213,9 +213,13 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogo
             <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-emerald-500/20 origin-center z-20" />
 
             <Link to="/" className="flex items-center space-x-3 z-50">
-              <div className="p-2 bg-emerald-500 rounded-lg shadow-lg">
-                <Zap className="text-black" size={18} fill="currentColor" />
-              </div>
+              {config?.logo_url ? (
+                <img src={config.logo_url} alt="Logo" className="h-10 object-contain rounded-md" />
+              ) : (
+                <div className="p-2 bg-emerald-500 rounded-lg shadow-lg">
+                  <Zap className="text-black" size={18} fill="currentColor" />
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
                 <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
@@ -270,9 +274,13 @@ const Footer = ({ user, config }: { user: string | null; config?: Record<string,
       <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-1 md:col-span-2">
           <Link to="/" className="flex items-center space-x-3 mb-6">
-            <div className="p-2 bg-emerald-500 rounded-lg">
-              <Zap className="text-black" size={18} fill="currentColor" />
-            </div>
+            {config?.logo_url ? (
+              <img src={config.logo_url} alt="Logo" className="h-10 object-contain rounded-md" />
+            ) : (
+              <div className="p-2 bg-emerald-500 rounded-lg">
+                <Zap className="text-black" size={18} fill="currentColor" />
+              </div>
+            )}
             <span className="font-black tracking-tighter uppercase text-xl">FITNESS CLUB.</span>
           </Link>
           <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-8">
@@ -592,7 +600,7 @@ const App: React.FC = () => {
               </motion.div>
             ) : (
               <div className="flex flex-col min-h-screen relative">
-                <Header scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} user={user} openIDModal={() => setIsIDModalOpen(true)} onLogout={handleLogout} />
+                <Header scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} user={user} openIDModal={() => setIsIDModalOpen(true)} onLogout={handleLogout} config={siteConfig} />
                 <IDModal isOpen={isIDModalOpen} onClose={() => setIsIDModalOpen(false)} />
                 <main className="flex-grow">
                   <Routes>
