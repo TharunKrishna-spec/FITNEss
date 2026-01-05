@@ -364,11 +364,16 @@ const IDModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 
 // helper: convert snake_case keys to camelCase
 const toCamel = (s: string) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-const mapKeysToCamel = (obj: any) => {
-  // handle non-objects
-  if (!obj || typeof obj !== 'object') return obj;
+// Replace mapKeysToCamel with a safe recursive implementation
+const mapKeysToCamel = (obj: any): any => {
+  // null / undefined / primitives: return as-is
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  // arrays: map each element
+  if (Array.isArray(obj)) return obj.map(mapKeysToCamel);
+  // plain object: convert keys and recurse
   return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [toCamel(k), v])
+    Object.entries(obj).map(([k, v]) => [toCamel(k), mapKeysToCamel(v)])
   );
 };
 

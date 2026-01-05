@@ -90,7 +90,11 @@ const AdminDashboard: React.FC<Props> = ({
       Object.entries(obj).map(([k, v]) => [toSnake(k), v])
     );
   };
-  const cleanObject = (obj: any) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+  // Make cleanObject robust against null/undefined/non-objects
+  const cleanObject = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+  };
 
   // add request state & error state near component state declarations
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
