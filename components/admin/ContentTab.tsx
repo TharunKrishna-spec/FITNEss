@@ -57,7 +57,7 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
   const uploadLogo = async (file: File) => {
     setUploading(true);
     try {
-      const bucket = 'site-assets';
+      const bucket = draft.storage_bucket || 'site-assets';
       const filePath = `branding/logo-${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
@@ -65,11 +65,15 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
       const publicUrl = data?.publicUrl || '';
 
       // persist to site_config right away
-      const { error: upsertError } = await supabase.from('site_config').upsert([{ key: 'logo_url', value: publicUrl }]);
+      const entries = [
+        { key: 'logo_url', value: publicUrl },
+        { key: 'storage_bucket', value: bucket }
+      ];
+      const { error: upsertError } = await supabase.from('site_config').upsert(entries);
       if (upsertError) throw upsertError;
 
-      setDraft(prev => ({ ...prev, logo_url: publicUrl }));
-      setSiteConfig(prev => ({ ...prev, logo_url: publicUrl }));
+      setDraft(prev => ({ ...prev, logo_url: publicUrl, storage_bucket: bucket }));
+      setSiteConfig(prev => ({ ...prev, logo_url: publicUrl, storage_bucket: bucket }));
       alert('Logo uploaded and saved');
     } catch (err: any) {
       alert(`Upload failed: ${err.message || err}`);
@@ -100,7 +104,7 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
         </button>
       </div>
 
-      <div className="glass-card p-5 rounded-3xl border border-white/5 flex items-center justify-between">
+      <div className="glass-card p-5 rounded-3xl border border-white/5 flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center gap-4">
           {draft.logo_url ? (
             <img src={draft.logo_url} alt="Logo" className="h-16 object-contain rounded-md" />
@@ -110,9 +114,19 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
           <div>
             <div className="text-sm font-black uppercase tracking-widest">Site Logo</div>
             <p className="text-[10px] text-slate-400">Upload a logo to use in the header and footer</p>
+            <div className="mt-3">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Storage Bucket</label>
+              <input
+                value={draft.storage_bucket || ''}
+                onChange={(e) => handleChange('storage_bucket', e.target.value)}
+                placeholder="site-assets"
+                className="mt-2 w-56 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
+              />
+              <p className="text-[10px] text-slate-500 mt-1">Bucket used for logo uploads (default: <span className="font-mono">site-assets</span>)</p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-4 md:mt-0">
           <label className="px-4 py-2 bg-white/5 rounded-2xl cursor-pointer text-[10px] font-black uppercase">
             <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
             {uploading ? 'Uploading...' : 'Upload Logo'}
@@ -121,6 +135,7 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
             <button
               onClick={async () => {
                 try {
+                  // clear saved URL
                   await supabase.from('site_config').upsert([{ key: 'logo_url', value: '' }]);
                   setDraft(prev => ({ ...prev, logo_url: '' }));
                   setSiteConfig(prev => ({ ...prev, logo_url: '' }));
