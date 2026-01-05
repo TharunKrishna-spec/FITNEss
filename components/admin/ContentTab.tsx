@@ -141,69 +141,66 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
         </button>
       </div>
 
-      <div className="glass-card p-5 rounded-3xl border border-white/5 flex flex-col md:flex-row items-center justify-between">
-        <div className="flex items-center gap-4">
-          {draft.logo_url ? (
-            <img src={draft.logo_url} alt="Logo" className="h-16 object-contain rounded-md" />
-          ) : (
-            <div className="h-16 w-16 bg-white/3 rounded-md flex items-center justify-center text-slate-400 font-black">Logo</div>
-          )}
-          <div>
-            <div className="text-sm font-black uppercase tracking-widest">Site Logo</div>
-            <p className="text-[10px] text-slate-400">Upload a logo to use in the header and footer</p>
-            <div className="mt-3 space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Storage Bucket</label>
+
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Logo card (first item) */}
+        <div className="glass-card p-5 rounded-3xl border border-white/5 flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <ImageIcon size={16} className="text-slate-300" />
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-widest">Site Logo</div>
+              <p className="text-[10px] text-slate-400">Upload or paste a public image URL to update the header/footer logo</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {draft.logo_url ? (
+              <img src={draft.logo_url} alt="Logo" className="h-16 object-contain rounded-md" />
+            ) : (
+              <div className="h-16 w-16 bg-white/3 rounded-md flex items-center justify-center text-slate-400 font-black">Logo</div>
+            )}
+
+            <div className="flex-1 flex flex-col gap-2">
               <input
-                value={draft.storage_bucket || ''}
-                onChange={(e) => handleChange('storage_bucket', e.target.value)}
-                placeholder="site-assets"
-                className="mt-2 w-56 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
+                value={draft.logo_url || ''}
+                onChange={(e) => handleChange('logo_url', e.target.value)}
+                placeholder="https://example.com/logo.png"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
               />
               <div className="flex items-center gap-2">
-                <input
-                  value={draft.logo_url || ''}
-                  onChange={(e) => handleChange('logo_url', e.target.value)}
-                  placeholder="https://example.com/logo.png"
-                  className="w-72 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
-                />
-                <button
-                  onClick={() => setLogoFromUrl(draft.logo_url || '')}
-                  className="px-4 py-2 bg-emerald-500 text-black rounded-2xl text-[10px] font-black uppercase"
-                >
-                  Use URL
-                </button>
+                <button onClick={() => setLogoFromUrl(draft.logo_url || '')} className="px-4 py-2 bg-emerald-500 text-black rounded-2xl text-[10px] font-black uppercase">Use URL</button>
+                <label className="px-4 py-2 bg-white/5 rounded-2xl cursor-pointer text-[10px] font-black uppercase">
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  {uploading ? 'Uploading...' : 'Upload File'}
+                </label>
+                {draft.logo_url && (
+                  <button onClick={async () => {
+                    try {
+                      await supabase.from('site_config').upsert([{ key: 'logo_url', value: '' }]);
+                      setDraft(prev => ({ ...prev, logo_url: '' }));
+                      setSiteConfig(prev => ({ ...prev, logo_url: '' }));
+                      alert('Logo removed');
+                    } catch (err: any) {
+                      alert(`Remove failed: ${err.message || err}`);
+                    }
+                  }} className="px-4 py-2 bg-red-500/10 rounded-2xl text-[10px] font-black uppercase text-red-400">Remove</button>
+                )}
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">Bucket used for logo uploads (default: <span className="font-mono">site-assets</span>)</p>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Storage Bucket</label>
+                <input
+                  value={draft.storage_bucket || ''}
+                  onChange={(e) => handleChange('storage_bucket', e.target.value)}
+                  placeholder="site-assets"
+                  className="mt-2 w-56 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <label className="px-4 py-2 bg-white/5 rounded-2xl cursor-pointer text-[10px] font-black uppercase">
-            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-            {uploading ? 'Uploading...' : 'Upload Logo'}
-          </label>
-          {draft.logo_url && (
-            <button
-              onClick={async () => {
-                try {
-                  // clear saved URL
-                  await supabase.from('site_config').upsert([{ key: 'logo_url', value: '' }]);
-                  setDraft(prev => ({ ...prev, logo_url: '' }));
-                  setSiteConfig(prev => ({ ...prev, logo_url: '' }));
-                  alert('Logo removed');
-                } catch (err: any) {
-                  alert(`Remove failed: ${err.message || err}`);
-                }
-              }}
-              className="px-4 py-2 bg-red-500/10 rounded-2xl text-[10px] font-black uppercase text-red-400"
-            >
-              Remove
-            </button>
-          )}
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Other content fields */}
         {presetFields.map(({ key, label, icon: Icon }) => (
           <label key={key} className="glass-card p-5 rounded-3xl border border-white/5 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-400">
