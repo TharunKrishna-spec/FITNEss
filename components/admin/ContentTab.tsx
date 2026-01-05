@@ -11,7 +11,6 @@ const presetFields = [
   { key: 'hero_title', label: 'Hero Title', icon: Type },
   { key: 'hero_subtitle', label: 'Hero Subtitle', icon: Type },
   { key: 'hero_image', label: 'Hero Image URL', icon: ImageIcon },
-  { key: 'logo_url', label: 'Logo Image URL', icon: ImageIcon },
   { key: 'who_are_we_title', label: 'Who Are We Title', icon: Type },
   { key: 'who_are_we_subtitle', label: 'Who Are We Description', icon: Type },
   { key: 'board_title', label: 'Board Section Title', icon: Type },
@@ -51,6 +50,44 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
       alert(`Save failed: ${err.message}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const validateImageUrl = (url: string) => {
+    if (!url) return false;
+    try {
+      const u = new URL(url);
+      return /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(u.pathname) || /^https?:\/\//i.test(url);
+    } catch {
+      return false;
+    }
+  };
+
+  const setLogoFromUrl = async (url: string) => {
+    if (!url) return alert('Please enter a URL');
+    if (!validateImageUrl(url)) {
+      // try loading the image to be sure
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          const timeout = setTimeout(() => reject(new Error('Image load timed out')), 5000);
+          img.onload = () => { clearTimeout(timeout); resolve(); };
+          img.onerror = () => { clearTimeout(timeout); reject(new Error('Image failed to load')); };
+          img.src = url;
+        });
+      } catch (err: any) {
+        return alert('Provided URL is not a valid or reachable image');
+      }
+    }
+
+    try {
+      const { error } = await supabase.from('site_config').upsert([{ key: 'logo_url', value: url }]);
+      if (error) throw error;
+      setDraft(prev => ({ ...prev, logo_url: url }));
+      setSiteConfig(prev => ({ ...prev, logo_url: url }));
+      alert('Logo URL saved');
+    } catch (err: any) {
+      alert(`Save failed: ${err.message || err}`);
     }
   };
 
@@ -114,7 +151,7 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
           <div>
             <div className="text-sm font-black uppercase tracking-widest">Site Logo</div>
             <p className="text-[10px] text-slate-400">Upload a logo to use in the header and footer</p>
-            <div className="mt-3">
+            <div className="mt-3 space-y-3">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Storage Bucket</label>
               <input
                 value={draft.storage_bucket || ''}
@@ -122,6 +159,20 @@ const ContentTab: React.FC<Props> = ({ siteConfig, setSiteConfig }) => {
                 placeholder="site-assets"
                 className="mt-2 w-56 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
               />
+              <div className="flex items-center gap-2">
+                <input
+                  value={draft.logo_url || ''}
+                  onChange={(e) => handleChange('logo_url', e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className="w-72 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:border-emerald-500 outline-none"
+                />
+                <button
+                  onClick={() => setLogoFromUrl(draft.logo_url || '')}
+                  className="px-4 py-2 bg-emerald-500 text-black rounded-2xl text-[10px] font-black uppercase"
+                >
+                  Use URL
+                </button>
+              </div>
               <p className="text-[10px] text-slate-500 mt-1">Bucket used for logo uploads (default: <span className="font-mono">site-assets</span>)</p>
             </div>
           </div>
