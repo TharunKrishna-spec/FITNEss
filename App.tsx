@@ -362,6 +362,16 @@ const IDModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   );
 };
 
+// helper: convert snake_case keys to camelCase
+const toCamel = (s: string) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+const mapKeysToCamel = (obj: any) => {
+  // handle non-objects
+  if (!obj || typeof obj !== 'object') return obj;
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [toCamel(k), v])
+  );
+};
+
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
   const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS);
@@ -400,11 +410,16 @@ const App: React.FC = () => {
           supabase.from('site_config').select('*')
         ]);
         if (p?.length) {
-          // Load profiles from DB when present
-          setProfiles(p);
-          console.debug('Loaded profiles from Supabase:', p);
+          // Map DB snake_case -> camelCase and set
+          const mappedProfiles = p.map(mapKeysToCamel);
+          setProfiles(mappedProfiles);
+          console.debug('Loaded profiles from Supabase (mapped):', mappedProfiles);
         }
-        if (e?.length) setEvents(e);
+        if (e?.length) {
+          // map events too (defensive)
+          const mappedEvents = e.map(mapKeysToCamel);
+          setEvents(mappedEvents);
+        }
         if (h?.length) {
           const mapped = h.map((rec: any) => ({
             id: rec.id,
@@ -436,9 +451,22 @@ const App: React.FC = () => {
       .channel('public:profiles')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
         const t = payload.eventType;
-        if (t === 'INSERT') setProfiles(prev => [...prev, payload.new]);
-        else if (t === 'UPDATE') setProfiles(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
-        else if (t === 'DELETE') setProfiles(prev => prev.filter(p => p.id !== payload.old.id));
+        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
+        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
+        if (t === 'INSERT' && newRec) {
+          setProfiles(prev => {
+            // dedupe if exists
+            if (prev.some(p => p.id === newRec.id)) return prev.map(p => (p.id === newRec.id ? newRec : p));
+            return [...prev, newRec];
+          });
+          console.debug('Profile INSERT applied:', newRec);
+        } else if (t === 'UPDATE' && newRec) {
+          setProfiles(prev => prev.map(p => (p.id === newRec.id ? newRec : p)));
+          console.debug('Profile UPDATE applied:', newRec);
+        } else if (t === 'DELETE' && oldRec) {
+          setProfiles(prev => prev.filter(p => p.id !== oldRec.id));
+          console.debug('Profile DELETE applied:', oldRec);
+        }
       })
       .subscribe();
 
@@ -447,9 +475,18 @@ const App: React.FC = () => {
       .channel('public:events')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
         const t = payload.eventType;
-        if (t === 'INSERT') setEvents(prev => [...prev, payload.new]);
-        else if (t === 'UPDATE') setEvents(prev => prev.map(e => (e.id === payload.new.id ? payload.new : e)));
-        else if (t === 'DELETE') setEvents(prev => prev.filter(e => e.id !== payload.old.id));
+        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
+        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
+        if (t === 'INSERT' && newRec) {
+          setEvents(prev => (prev.some(x => x.id === newRec.id) ? prev.map(x => (x.id === newRec.id ? newRec : x)) : [...prev, newRec]));
+          console.debug('Event INSERT applied:', newRec);
+        } else if (t === 'UPDATE' && newRec) {
+          setEvents(prev => prev.map(e => (e.id === newRec.id ? newRec : e)));
+          console.debug('Event UPDATE applied:', newRec);
+        } else if (t === 'DELETE' && oldRec) {
+          setEvents(prev => prev.filter(e => e.id !== oldRec.id));
+          console.debug('Event DELETE applied:', oldRec);
+        }
       })
       .subscribe();
 
@@ -469,9 +506,18 @@ const App: React.FC = () => {
           featured: rec.featured
         });
         const t = payload.eventType;
-        if (t === 'INSERT') setHallOfFame(prev => [...prev, mapRec(payload.new)]);
-        else if (t === 'UPDATE') setHallOfFame(prev => prev.map(h => (h.id === payload.new.id ? mapRec(payload.new) : h)));
-        else if (t === 'DELETE') setHallOfFame(prev => prev.filter(h => h.id !== payload.old.id));
+        if (t === 'INSERT') {
+          const r = mapRec(payload.new);
+          setHallOfFame(prev => (prev.some(x => x.id === r.id) ? prev.map(x => (x.id === r.id ? r : x)) : [...prev, r]));
+          console.debug('HOF INSERT:', r);
+        } else if (t === 'UPDATE') {
+          const r = mapRec(payload.new);
+          setHallOfFame(prev => prev.map(h => (h.id === r.id ? r : h)));
+          console.debug('HOF UPDATE:', r);
+        } else if (t === 'DELETE') {
+          setHallOfFame(prev => prev.filter(h => h.id !== payload.old.id));
+          console.debug('HOF DELETE:', payload.old);
+        }
       })
       .subscribe();
 
