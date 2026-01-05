@@ -49,11 +49,24 @@ const AdminDashboard: React.FC<Props> = ({
       const profilesPayload = SEED_PROFILES.map(mapProfileToDb);
       const eventsPayload = INITIAL_EVENTS.map(mapEventToDb);
       const hofPayload = INITIAL_HALL_OF_FAME.map(mapHallToDb);
-      await Promise.all([
-        supabase.from('profiles').upsert(profilesPayload),
-        supabase.from('events').upsert(eventsPayload),
-        supabase.from('hall_of_fame').upsert(hofPayload)
-      ]);
+
+      // Try upsert; if profile upsert errors about unknown columns, retry without socials
+      const pRes = await supabase.from('profiles').upsert(profilesPayload);
+      if (pRes.error) {
+        const msg = (pRes.error.message || '').toLowerCase();
+        if (msg.includes('could not find') || msg.includes('column') || msg.includes('unknown column')) {
+          const stripped = profilesPayload.map(({ socials, ...rest }) => rest);
+          const retry = await supabase.from('profiles').upsert(stripped);
+          if (retry.error) throw retry.error;
+        } else throw pRes.error;
+      }
+
+      const eRes = await supabase.from('events').upsert(eventsPayload);
+      if (eRes.error) throw eRes.error;
+
+      const hRes = await supabase.from('hall_of_fame').upsert(hofPayload);
+      if (hRes.error) throw hRes.error;
+
       alert("System Initialized. Refreshing data...");
       window.location.reload();
     } catch (err: any) {
@@ -105,14 +118,11 @@ const AdminDashboard: React.FC<Props> = ({
   // Replace the profile save handler with this (adjust name to your existing handler)
   const handleSaveProfile = async (profileData: any) => {
     setProfileError(null);
-    if (!profileData.name && !profileData.fullName && !profileData.displayName) {
-      setProfileError('Name is required');
-      return;
-    }
+    if (!profileData.name) { setProfileError('Name is required'); return; }
     setIsSavingProfile(true);
     try {
       const payload = mapProfileToDb(profileData);
-      let { data, error } = await supabase.from('profiles').upsert([payload]).select();
+      let { error } = await supabase.from('profiles').upsert([payload]).select();
       if (error) {
         const msg = (error.message || '').toLowerCase();
         if (msg.includes('could not find') || msg.includes('column') || msg.includes('unknown column')) {
@@ -120,7 +130,6 @@ const AdminDashboard: React.FC<Props> = ({
           const retry = await supabase.from('profiles').upsert([withoutSocials]).select();
           if (retry.error) {
             setProfileError(retry.error.message || 'Failed to save profile');
-            console.error('Admin handleSaveProfile retry error', retry.error);
             return;
           }
         } else {

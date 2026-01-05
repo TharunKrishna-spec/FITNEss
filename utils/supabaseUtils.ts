@@ -10,35 +10,29 @@ export const cleanObject = (obj: any) => {
 
 const SOCIAL_KEYS = new Set(['instagram', 'linkedin', 'twitter', 'facebook', 'youtube', 'tiktok']);
 
-// map UI profile -> DB payload (snake_case). Normalize socials keys into a single `socials` JSON.
+// Map UI profile -> DB payload. Normalize socials keys into a single `socials` JSON property
 export const mapProfileToDb = (p: any) => {
     if (!p || typeof p !== 'object') return p;
     const out: any = {};
     let socialsObj: any = {};
-
     Object.entries(p).forEach(([k, v]) => {
-        // If user accidentally stored socials at top-level (instagram/tag etc.), collect them
+        // collect top-level social keys into socials JSON
         if (SOCIAL_KEYS.has(k)) {
             if (v) socialsObj[k] = v;
             return;
         }
-
         if (k === 'socials' && typeof v === 'object') {
-            // merge explicit socials object
             Object.entries(v).forEach(([sk, sv]) => {
                 if (sv !== undefined && sv !== null && sv !== '') socialsObj[sk] = sv;
             });
             return;
         }
-
         if (k === 'achievements' && Array.isArray(v)) {
             out[toSnake(k)] = JSON.stringify(v);
             return;
         }
-
         out[toSnake(k)] = v;
     });
-
     if (Object.keys(socialsObj).length) out['socials'] = socialsObj;
     return cleanObject(out);
 };

@@ -61,13 +61,13 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
 
     const payloadDb = mapProfileToDb(payloadUi);
 
-    // Try upsert; if DB complains about a missing socials/unknown column, retry without socials
     try {
-      let res = await supabase.from('profiles').upsert([payloadDb]).select();
+      // Try the normal upsert first
+      const res = await supabase.from('profiles').upsert([payloadDb]).select();
       if (res.error) {
         const msg = (res.error.message || '').toLowerCase();
+        // If DB complains about missing columns (e.g., 'instagram' or 'linkedin'), retry without socials
         if (msg.includes('could not find') || msg.includes('column') || msg.includes('unknown column')) {
-          // Retry without socials
           const { socials, ...withoutSocials } = payloadDb;
           const retry = await supabase.from('profiles').upsert([withoutSocials]).select();
           if (retry.error) {
@@ -78,15 +78,15 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
             setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
             setEditing(null);
           }
-          return;
+        } else {
+          setSaveError(res.error.message || 'Failed to save profile');
+          console.error('RegistryTab upsert error', res.error);
         }
-        setSaveError(res.error.message || 'Failed to save profile');
-        console.error('RegistryTab upsert error', res.error);
-        return;
+      } else {
+        // success
+        setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
+        setEditing(null);
       }
-      // success
-      setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
-      setEditing(null);
     } catch (err: any) {
       console.error('Unexpected save profile error', err);
       setSaveError(err?.message || String(err));
@@ -190,7 +190,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
                 </div>
               </div>
             ))
-          }
+					}
         </div>
 
         {/* Add Registration Modal */}
@@ -281,7 +281,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
                   {Object.values(Role).map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
-              <button className="w-full py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl" disabled={isSaving}>
+              <button className="w-full py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px]" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Commit Changes'}
               </button>
               {saveError && <p className="text-sm text-red-400 mt-2">{saveError}</p>}
@@ -291,19 +291,19 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
       )}
 
       <style>{`
-        .admin-input {
-          width: 100%;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 16px;
-          padding: 16px 20px;
-          color: white;
-          font-size: 14px;
-          outline: none;
-          transition: all 0.3s;
-        }
-        .admin-input:focus { border-color: #10b981; background: rgba(255,255,255,0.05); }
-      `}</style>
+				.admin-input {
+					width: 100%;
+					background: rgba(255,255,255,0.03);
+					border: 1px solid rgba(255,255,255,0.1);
+					border-radius: 16px;
+					padding: 16px 20px;
+					color: white;
+					font-size: 14px;
+					outline: none;
+					transition: all 0.3s;
+				}
+				.admin-input:focus { border-color: #10b981; background: rgba(255,255,255,0.05); }
+			`}</style>
     </div>
   );
 };
