@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { INITIAL_PROFILES, INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from '../constants';
+import { mapProfileToDb, mapEventToDb, mapHallToDb } from '../utils/supabaseUtils';
 
 // Sub-components
 import RegistryTab from './admin/RegistryTab';
@@ -45,15 +46,20 @@ const AdminDashboard: React.FC<Props> = ({
     if (!confirm("This will upload initial demo data ( Aryan Sharma, Campus Clash 2024, etc.) to your Supabase instance. Continue?")) return;
     setIsSyncing(true);
     try {
+      // map to DB shape to avoid 400 errors
+      const profilesPayload = INITIAL_PROFILES.map(mapProfileToDb);
+      const eventsPayload = INITIAL_EVENTS.map(mapEventToDb);
+      const hofPayload = INITIAL_HALL_OF_FAME.map(mapHallToDb);
+
       await Promise.all([
-        supabase.from('profiles').upsert(INITIAL_PROFILES),
-        supabase.from('events').upsert(INITIAL_EVENTS),
-        supabase.from('hall_of_fame').upsert(INITIAL_HALL_OF_FAME)
+        supabase.from('profiles').upsert(profilesPayload),
+        supabase.from('events').upsert(eventsPayload),
+        supabase.from('hall_of_fame').upsert(hofPayload)
       ]);
       alert("System Initialized. Refreshing data...");
       window.location.reload();
     } catch (err: any) {
-      alert(`Seed failed: ${err.message}`);
+      alert(`Seed failed: ${err.message || String(err)}`);
     } finally {
       setIsSyncing(false);
     }
@@ -63,8 +69,8 @@ const AdminDashboard: React.FC<Props> = ({
     <button
       onClick={() => setActiveTab(id)}
       className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl transition-all group ${activeTab === id
-          ? 'bg-emerald-500 text-black font-black shadow-lg shadow-emerald-500/20'
-          : 'text-slate-500 hover:text-white hover:bg-white/5'
+        ? 'bg-emerald-500 text-black font-black shadow-lg shadow-emerald-500/20'
+        : 'text-slate-500 hover:text-white hover:bg-white/5'
         }`}
     >
       <div className="flex items-center space-x-4">
@@ -105,11 +111,10 @@ const AdminDashboard: React.FC<Props> = ({
 
     setIsSavingProfile(true);
     try {
-      const payload = cleanObject(mapKeysToSnake(profileData));
-      // use insert or upsert depending on your flow
-      const { data, error } = await supabase.from('profiles').insert([payload]).select();
+      const payload = mapProfileToDb(profileData);
+      const { data, error } = await supabase.from('profiles').upsert([payload]).select();
       if (error) {
-        console.error('Supabase profiles insert error:', error);
+        console.error('Supabase profiles upsert error:', error);
         setProfileError(error.message || 'Failed to save profile');
         return;
       }
@@ -133,10 +138,10 @@ const AdminDashboard: React.FC<Props> = ({
 
     setIsSavingEvent(true);
     try {
-      const payload = cleanObject(mapKeysToSnake(eventData));
-      const { data, error } = await supabase.from('events').insert([payload]).select();
+      const payload = mapEventToDb(eventData);
+      const { data, error } = await supabase.from('events').upsert([payload]).select();
       if (error) {
-        console.error('Supabase events insert error:', error);
+        console.error('Supabase events upsert error:', error);
         setEventError(error.message || 'Failed to save event');
         return;
       }

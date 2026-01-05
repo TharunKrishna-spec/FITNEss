@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Profile, Role } from '../../types';
 import { Edit2, Trash2, UserPlus, Search, ImageIcon, FileText, QrCode, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../supabaseClient';
+import { mapProfileToDb } from '../../utils/supabaseUtils';
 
 const generateId = () => crypto.randomUUID();
 
@@ -24,6 +24,8 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [addingRegistration, setAddingRegistration] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     loadRegistrations();
@@ -34,7 +36,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
       .from('registrations')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (!error && data) {
       setRegistrations(data);
     }
@@ -42,21 +44,37 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData.entries());
-    const id = editing.id || generateId();
-    
-    const payload = {
-      ...editing,
-      ...data,
-      id,
-      order_index: Number(data.order_index) || 0
-    };
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const data = Object.fromEntries(formData.entries());
+      const id = editing?.id || generateId();
 
-    const { error } = await supabase.from('profiles').upsert(payload);
-    if (!error) {
-      setProfiles(editing.id ? profiles.map(p => p.id === id ? payload : p) : [...profiles, payload]);
+      const payloadUi = {
+        ...editing,
+        ...data,
+        id,
+        order_index: Number(data.order_index) || 0
+      };
+
+      const payloadDb = mapProfileToDb(payloadUi);
+
+      const { data: upserted, error } = await supabase.from('profiles').upsert([payloadDb]).select();
+      if (error) {
+        console.error('profiles upsert error', error);
+        setSaveError(error.message || 'Failed to save profile');
+        return;
+      }
+      // Update local UI state using the mapped UI shape
+      const updatedUi = { ...payloadUi }; // it's safe — DB returns snake_case; realtime subscription will sync
+      setProfiles(editing?.id ? profiles.map(p => p.id === id ? updatedUi as Profile : p) : [...profiles, updatedUi as Profile]);
       setEditing(null);
+    } catch (err: any) {
+      console.error('Unexpected save error', err);
+      setSaveError(err?.message || String(err));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -91,7 +109,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
     }
   };
 
-  const filteredRegistrations = registrations.filter(r => 
+  const filteredRegistrations = registrations.filter(r =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.reg_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -105,8 +123,8 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
             <QrCode className="text-emerald-500" size={24} />
             <h3 className="text-3xl font-black uppercase tracking-tighter italic">QR Registrations</h3>
           </div>
-          <button 
-            onClick={() => setAddingRegistration(true)} 
+          <button
+            onClick={() => setAddingRegistration(true)}
             className="bg-emerald-500 text-black px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
           >
             Add Registration
@@ -205,7 +223,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {profiles.sort((a,b) => (a.order_index || 0) - (b.order_index || 0)).map(p => (
+        {profiles.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map(p => (
           <div key={p.id} className="glass-card p-6 rounded-[32px] flex items-center justify-between group hover:bg-white/[0.03] transition-all">
             <div className="flex items-center space-x-6">
               <img src={p.photo} className="w-16 h-16 rounded-2xl object-cover bg-slate-800 border border-white/5" />
@@ -216,7 +234,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
             </div>
             <div className="flex gap-2">
               <button onClick={() => setEditing(p)} className="p-4 bg-white/5 rounded-xl hover:text-emerald-500 transition-colors"><Edit2 size={16} /></button>
-              <button onClick={async () => { if(confirm('Purge record?')) { await supabase.from('profiles').delete().eq('id', p.id); setProfiles(profiles.filter(x => x.id !== p.id)); } }} className="p-4 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
+              <button onClick={async () => { if (confirm('Purge record?')) { await supabase.from('profiles').delete().eq('id', p.id); setProfiles(profiles.filter(x => x.id !== p.id)); } }} className="p-4 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
             </div>
           </div>
         ))}
@@ -239,7 +257,10 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
                   {Object.values(Role).map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
-              <button className="w-full py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl">Commit Changes</button>
+              <button className="w-full py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Commit Changes'}
+              </button>
+              {saveError && <p className="text-sm text-red-400 mt-2">{saveError}</p>}
             </form>
           </motion.div>
         </div>
