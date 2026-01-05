@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Menu, X, Zap, ShieldCheck, LogOut, CreditCard, QrCode, Instagram, Linkedin, Mail, ShieldAlert, ArrowUp } from 'lucide-react';
-import { INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from './constants';
+// no prefetched constants imported for runtime UI
 import { Event, Achievement } from './types';
 import { supabase } from './supabaseClient';
 
@@ -379,18 +379,9 @@ const mapKeysToCamel = (obj: any): any => {
 
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS);
-  const [hallOfFame, setHallOfFame] = useState<Achievement[]>(INITIAL_HALL_OF_FAME);
-  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({
-    hero_title: 'FITNESS CLUB.',
-    hero_subtitle: 'The high-performance athletic pulse of VIT Chennai.',
-    hero_image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=1200',
-    board_title: 'THE BOARD.',
-    announcements_title: 'ANNOUNCEMENTS.',
-    announcements_subtitle: 'Club News & Updates',
-    hall_title: 'HALL OF CHAMPIONS.',
-    announcements_list: '[]'
-  });
+  const [events, setEvents] = useState<Event[]>([]);
+  const [hallOfFame, setHallOfFame] = useState<Achievement[]>([]);
+  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({});
   const [user, setUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -413,7 +404,8 @@ const App: React.FC = () => {
         setUser(sessionData?.session?.user?.email || null);
 
         const [pRes, eRes, hRes, cRes] = await Promise.all([
-          supabase.from('profiles').select('*'),
+          // explicitly select columns and exclude 'socials'
+          supabase.from('profiles').select('id, name, role, position, reg_no, tenure, photo, bio, achievements, order_index'),
           supabase.from('events').select('*'),
           supabase.from('hall_of_fame').select('id, athlete_name, category, event_name, year, position, athlete_img, stat, featured'),
           supabase.from('site_config').select('*')
@@ -433,34 +425,30 @@ const App: React.FC = () => {
 
         // events
         if (eRes.error) console.warn('events fetch error', eRes.error);
-        if (eRes.data && eRes.data.length) setEvents(eRes.data.map(mapKeysToCamel));
-        else setEvents(INITIAL_EVENTS);
+        setEvents(eRes.data && eRes.data.length ? eRes.data.map(mapKeysToCamel) : []);
 
         // hall of fame
         if (hRes.error) console.warn('hall_of_fame fetch error', hRes.error);
-        if (hRes.data && hRes.data.length) {
-          const mapped = hRes.data.map((rec: any) => ({
-            id: rec.id,
-            athleteName: rec.athlete_name,
-            category: rec.category,
-            eventName: rec.event_name,
-            year: rec.year,
-            position: rec.position,
-            athleteImg: rec.athlete_img,
-            stat: rec.stat,
-            featured: rec.featured
-          }));
-          setHallOfFame(mapped);
-        } else {
-          setHallOfFame(INITIAL_HALL_OF_FAME);
-        }
+        setHallOfFame(hRes.data && hRes.data.length ? hRes.data.map((rec: any) => ({
+          id: rec.id,
+          athleteName: rec.athlete_name,
+          category: rec.category,
+          eventName: rec.event_name,
+          year: rec.year,
+          position: rec.position,
+          athleteImg: rec.athlete_img,
+          stat: rec.stat,
+          featured: rec.featured
+        })) : []);
 
         // site config
         if (cRes.error) console.warn('site_config fetch error', cRes.error);
         if (cRes.data && cRes.data.length) {
           const configMap: Record<string, string> = {};
           cRes.data.forEach((item: any) => { configMap[item.key] = item.value; });
-          setSiteConfig(prev => ({ ...prev, ...configMap }));
+          setSiteConfig(configMap);
+        } else {
+          setSiteConfig({});
         }
       } catch (err) {
         console.warn('Failed to load data', err);

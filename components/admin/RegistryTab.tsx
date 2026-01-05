@@ -192,7 +192,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
                 </div>
               </div>
             ))
-					}
+          )}
         </div>
 
         {/* Add Registration Modal */}

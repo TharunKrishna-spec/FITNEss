@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Role, Profile } from '../types';
 import { Linkedin, Instagram, X as XIcon, ArrowUpRight, Trophy, Users, Shield, GraduationCap, Sparkles } from 'lucide-react';
@@ -27,6 +26,9 @@ const ProfileCard = ({ profile, onClick, featured, delay = 0, index = 0 }: {
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     setMousePosition({ x, y });
   };
+
+  // Hide socials & mentorship for core leadership/advisory profiles
+  const hideSocials = profile.role === Role.BOARD || profile.role === Role.LEAD || profile.position === 'Advisory';
 
   return (
     <motion.div
@@ -224,32 +226,6 @@ const ProfileCard = ({ profile, onClick, featured, delay = 0, index = 0 }: {
                 {profile.name.split(' ').slice(1).join(' ')}
               </motion.span>
             </motion.h3>
-
-            {/* Social Links with stagger animation */}
-            <motion.div
-              className="flex items-center space-x-4"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : -10 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              <motion.div
-                className="h-px bg-gradient-to-r from-emerald-500 to-transparent"
-                animate={{ width: isHovered ? 32 : 0 }}
-                transition={{ duration: 0.3 }}
-              />
-              <div className="flex space-x-3">
-                {profile.socials?.instagram && (
-                  <motion.div whileHover={{ scale: 1.2, y: -2 }} whileTap={{ scale: 0.9 }}>
-                    <Instagram size={16} className="text-slate-400 hover:text-pink-500 transition-colors cursor-pointer" />
-                  </motion.div>
-                )}
-                {profile.socials?.linkedin && (
-                  <motion.div whileHover={{ scale: 1.2, y: -2 }} whileTap={{ scale: 0.9 }}>
-                    <Linkedin size={16} className="text-slate-400 hover:text-blue-500 transition-colors cursor-pointer" />
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </div>
@@ -299,7 +275,7 @@ const BoardMembersPage: React.FC<Props> = ({ profiles, config }) => {
     <div className="relative min-h-screen bg-[#020617] pb-48">
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Animated Neural Grid */}
-        <div 
+        <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
@@ -540,24 +516,6 @@ const BoardMembersPage: React.FC<Props> = ({ profiles, config }) => {
                         </div>
                       </div>
                     )}
-                  </div>
-
-                  <div className="mt-12 lg:mt-16 flex items-center space-x-4">
-                    <button className="flex-grow py-5 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-400 active:scale-95 transition-all shadow-xl shadow-emerald-500/20">
-                      Request Mentorship
-                    </button>
-                    <div className="flex space-x-2">
-                      {selectedProfile.socials?.instagram && (
-                        <a href={selectedProfile.socials.instagram} target="_blank" className="p-5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-                          <Instagram size={20} className="text-slate-400 hover:text-white transition-colors" />
-                        </a>
-                      )}
-                      {selectedProfile.socials?.linkedin && (
-                        <a href={selectedProfile.socials.linkedin} target="_blank" className="p-5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-                          <Linkedin size={20} className="text-slate-400 hover:text-white transition-colors" />
-                        </a>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>

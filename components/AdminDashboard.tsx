@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { SEED_PROFILES, INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from '../constants';
+import { SEED_PROFILES, SEED_EVENTS, SEED_HALL_OF_FAME } from '../constants';
 import { mapProfileToDb, mapEventToDb, mapHallToDb } from '../utils/supabaseUtils';
 
 // Sub-components
@@ -47,8 +47,8 @@ const AdminDashboard: React.FC<Props> = ({
     setIsSyncing(true);
     try {
       const profilesPayload = SEED_PROFILES.map(mapProfileToDb);
-      const eventsPayload = INITIAL_EVENTS.map(mapEventToDb);
-      const hofPayload = INITIAL_HALL_OF_FAME.map(mapHallToDb);
+      const eventsPayload = SEED_EVENTS.map(mapEventToDb);
+      const hofPayload = SEED_HALL_OF_FAME.map(mapHallToDb);
 
       // Try upsert; if profile upsert errors about unknown columns, retry without socials
       const pRes = await supabase.from('profiles').upsert(profilesPayload);
@@ -70,7 +70,7 @@ const AdminDashboard: React.FC<Props> = ({
       alert("System Initialized. Refreshing data...");
       window.location.reload();
     } catch (err: any) {
-      alert(`Seed failed: ${err.message || String(err)}`);
+      alert(`Seed failed: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }

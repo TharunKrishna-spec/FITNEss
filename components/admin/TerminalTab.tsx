@@ -359,7 +359,10 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
             <div className="space-y-4 overflow-y-auto no-scrollbar flex-grow">
               <AnimatePresence initial={false}>
                 {history.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24 text-slate-800"><Terminal size={64} className="mb-6 opacity-10" /><p className="text-[10px] font-black uppercase tracking-widest opacity-20 italic">No cycles detected</p></div>
+                  <div className="flex flex-col items-center justify-center py-24 text-slate-800">
+                    <Terminal size={64} className="mb-6 opacity-10" />
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-20 italic">No cycles detected</p>
+                  </div>
                 ) : (
                   history.map((h, i) => (
                     <motion.div key={`${h.raw}-${h.ts}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] flex justify-between items-center group">
@@ -370,7 +373,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
                       <div className={`p-4 rounded-2xl border ${h.profile ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-red-500/10 text-red-500 border-red-500/10'}`}>{h.profile ? <UserCheck size={20} /> : <ShieldAlert size={20} />}</div>
                     </motion.div>
                   ))
-                }
+                )}
               </AnimatePresence>
             </div>
           </div>

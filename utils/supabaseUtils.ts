@@ -8,32 +8,19 @@ export const cleanObject = (obj: any) => {
     );
 };
 
-const SOCIAL_KEYS = new Set(['instagram', 'linkedin', 'twitter', 'facebook', 'youtube', 'tiktok']);
-
-// Map UI profile -> DB payload. Normalize socials keys into a single `socials` JSON property
+// map UI profile -> DB shape (NO socials, strip any top-level social keys)
 export const mapProfileToDb = (p: any) => {
     if (!p || typeof p !== 'object') return p;
     const out: any = {};
-    let socialsObj: any = {};
     Object.entries(p).forEach(([k, v]) => {
-        // collect top-level social keys into socials JSON
-        if (SOCIAL_KEYS.has(k)) {
-            if (v) socialsObj[k] = v;
-            return;
-        }
-        if (k === 'socials' && typeof v === 'object') {
-            Object.entries(v).forEach(([sk, sv]) => {
-                if (sv !== undefined && sv !== null && sv !== '') socialsObj[sk] = sv;
-            });
-            return;
-        }
+        // ignore any social keys entirely (instagram/linkedin/twitter/facebook/...) and 'socials' field
+        if (['instagram', 'linkedin', 'twitter', 'facebook', 'youtube', 'tiktok', 'socials'].includes(k)) return;
         if (k === 'achievements' && Array.isArray(v)) {
             out[toSnake(k)] = JSON.stringify(v);
-            return;
+        } else {
+            out[toSnake(k)] = v;
         }
-        out[toSnake(k)] = v;
     });
-    if (Object.keys(socialsObj).length) out['socials'] = socialsObj;
     return cleanObject(out);
 };
 
