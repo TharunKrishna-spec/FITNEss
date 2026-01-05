@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Menu, X, Zap, ShieldCheck, LogOut, CreditCard, QrCode, Instagram, Linkedin, Mail, ShieldAlert, ArrowUp } from 'lucide-react';
-import { INITIAL_PROFILES, INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from './constants';
-import { Profile, Event, Achievement } from './types';
+import { INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from './constants';
+import { Event, Achievement } from './types';
 import { supabase } from './supabaseClient';
 
 // Error Boundary Component
@@ -373,7 +373,7 @@ const mapKeysToCamel = (obj: any) => {
 };
 
 const App: React.FC = () => {
-  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS);
   const [hallOfFame, setHallOfFame] = useState<Achievement[]>(INITIAL_HALL_OF_FAME);
   const [siteConfig, setSiteConfig] = useState<Record<string, string>>({
@@ -421,8 +421,9 @@ const App: React.FC = () => {
           setProfiles(mappedProfiles);
           console.debug('Loaded profiles from Supabase (mapped):', mappedProfiles);
         } else {
-          // fallback to initial data when DB empty
-          setProfiles(INITIAL_PROFILES);
+          // No profiles present in DB
+          setProfiles([]);
+          console.debug('No profiles found in Supabase.');
         }
 
         // events

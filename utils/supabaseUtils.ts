@@ -29,13 +29,7 @@ export const mapProfileToDb = (p: any) => {
 export const mapEventToDb = (e: any) => {
     if (!e || typeof e !== 'object') return e;
     const out: any = {};
-    Object.entries(e).forEach(([k, v]) => {
-        if (k === 'score_schema' && Array.isArray(v)) {
-            out[toSnake(k)] = v; // assume DB column is jsonb
-        } else {
-            out[toSnake(k)] = v;
-        }
-    });
+    Object.entries(e).forEach(([k, v]) => { out[toSnake(k)] = v; });
     return cleanObject(out);
 };
 

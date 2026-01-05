@@ -1,7 +1,10 @@
-
 import { Role, Profile, Event, EventStatus, Achievement, PodiumPosition } from './types';
 
-export const INITIAL_PROFILES: Profile[] = [
+// No client-side hardcoded profiles — app will fetch from backend
+export const INITIAL_PROFILES: Profile[] = [];
+
+// Demo seed dataset (used only by Admin -> Seed System Data)
+export const SEED_PROFILES: Profile[] = [
   {
     id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     name: 'Vishnu Paandian',
