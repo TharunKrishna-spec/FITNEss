@@ -105,23 +105,30 @@ const AdminDashboard: React.FC<Props> = ({
   // Replace the profile save handler with this (adjust name to your existing handler)
   const handleSaveProfile = async (profileData: any) => {
     setProfileError(null);
-    // basic validation (adjust required fields as needed)
     if (!profileData.name && !profileData.fullName && !profileData.displayName) {
       setProfileError('Name is required');
       return;
     }
-
     setIsSavingProfile(true);
     try {
       const payload = mapProfileToDb(profileData);
-      const { data, error } = await supabase.from('profiles').upsert([payload]).select();
+      let { data, error } = await supabase.from('profiles').upsert([payload]).select();
       if (error) {
-        console.error('Supabase profiles upsert error:', error);
-        setProfileError(error.message || 'Failed to save profile');
-        return;
+        const msg = (error.message || '').toLowerCase();
+        if (msg.includes('could not find') || msg.includes('column') || msg.includes('unknown column')) {
+          const { socials, ...withoutSocials } = payload;
+          const retry = await supabase.from('profiles').upsert([withoutSocials]).select();
+          if (retry.error) {
+            setProfileError(retry.error.message || 'Failed to save profile');
+            console.error('Admin handleSaveProfile retry error', retry.error);
+            return;
+          }
+        } else {
+          setProfileError(error.message || 'Failed to save profile');
+          return;
+        }
       }
-      // success - UI will be updated via realtime subscription; optionally update local state here:
-      console.debug('Profile saved:', data);
+      console.debug('Profile saved');
     } catch (err: any) {
       console.error('Unexpected save error', err);
       setProfileError(err?.message || String(err));

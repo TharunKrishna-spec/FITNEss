@@ -44,24 +44,54 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
+    setIsSaving(true);
+
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
-
-    // Defensive: editing may be null/undefined, avoid Object.entries on it
     const id = editing?.id || generateId();
     const base = editing || {};
 
-    const payload = {
+    const payloadUi = {
       ...base,
       ...data,
       id,
       order_index: Number((data as any).order_index) || 0
     };
 
-    const { error } = await supabase.from('profiles').upsert(payload);
-    if (!error) {
-      setProfiles(editing?.id ? profiles.map(p => p.id === id ? payload as Profile : p) : [...profiles, payload as Profile]);
+    const payloadDb = mapProfileToDb(payloadUi);
+
+    // Try upsert; if DB complains about a missing socials/unknown column, retry without socials
+    try {
+      let res = await supabase.from('profiles').upsert([payloadDb]).select();
+      if (res.error) {
+        const msg = (res.error.message || '').toLowerCase();
+        if (msg.includes('could not find') || msg.includes('column') || msg.includes('unknown column')) {
+          // Retry without socials
+          const { socials, ...withoutSocials } = payloadDb;
+          const retry = await supabase.from('profiles').upsert([withoutSocials]).select();
+          if (retry.error) {
+            setSaveError(retry.error.message || 'Failed to save profile');
+            console.error('RegistryTab upsert retry error', retry.error);
+          } else {
+            // success on retry
+            setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
+            setEditing(null);
+          }
+          return;
+        }
+        setSaveError(res.error.message || 'Failed to save profile');
+        console.error('RegistryTab upsert error', res.error);
+        return;
+      }
+      // success
+      setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
       setEditing(null);
+    } catch (err: any) {
+      console.error('Unexpected save profile error', err);
+      setSaveError(err?.message || String(err));
+    } finally {
+      setIsSaving(false);
     }
   };
 
