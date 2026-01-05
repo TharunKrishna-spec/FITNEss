@@ -44,37 +44,26 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveError(null);
-    setIsSaving(true);
-    try {
-      const formData = new FormData(e.target as HTMLFormElement);
-      const data = Object.fromEntries(formData.entries());
-      const id = editing?.id || generateId();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data = Object.fromEntries(formData.entries());
+    const id = editing.id || generateId();
 
-      const payloadUi = {
-        ...editing,
-        ...data,
-        id,
-        order_index: Number(data.order_index) || 0
-      };
+    const payloadUi = {
+      ...editing,
+      ...data,
+      id,
+      order_index: Number(data.order_index) || 0
+    };
 
-      const payloadDb = mapProfileToDb(payloadUi);
+    // Map to DB shape (socials will be a JSON object)
+    const payloadDb = mapProfileToDb(payloadUi);
 
-      const { data: upserted, error } = await supabase.from('profiles').upsert([payloadDb]).select();
-      if (error) {
-        console.error('profiles upsert error', error);
-        setSaveError(error.message || 'Failed to save profile');
-        return;
-      }
-      // Update local UI state using the mapped UI shape
-      const updatedUi = { ...payloadUi }; // it's safe — DB returns snake_case; realtime subscription will sync
-      setProfiles(editing?.id ? profiles.map(p => p.id === id ? updatedUi as Profile : p) : [...profiles, updatedUi as Profile]);
+    const { error } = await supabase.from('profiles').upsert(payloadDb);
+    if (!error) {
+      setProfiles(editing.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
       setEditing(null);
-    } catch (err: any) {
-      console.error('Unexpected save error', err);
-      setSaveError(err?.message || String(err));
-    } finally {
-      setIsSaving(false);
+    } else {
+      alert('Failed to save: ' + error.message);
     }
   };
 
@@ -170,7 +159,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
                 </div>
               </div>
             ))
-          )}
+          }
         </div>
 
         {/* Add Registration Modal */}

@@ -1,22 +1,20 @@
 export const toSnake = (s: string) => s.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
 export const cleanObject = (obj: any) => {
-    // remove undefined / null / empty strings
+    // return as-is if not an object
     if (!obj || typeof obj !== 'object') return obj;
     return Object.fromEntries(
-        Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        Object.entries(obj)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
     );
 };
 
-// map a profile from UI shape -> DB shape (snake_case, flatten socials, stringify arrays)
 export const mapProfileToDb = (p: any) => {
     if (!p || typeof p !== 'object') return p;
     const out: any = {};
     Object.entries(p).forEach(([k, v]) => {
-        if (k === 'socials' && typeof v === 'object') {
-            // flatten socials into separate columns if present
-            Object.entries(v).forEach(([sk, sv]) => {
-                out[toSnake(sk)] = sv;
-            });
+        if (k === 'socials') {
+            // keep socials as a JSON object under `socials` column
+            if (v && typeof v === 'object') out['socials'] = cleanObject(v);
         } else if (k === 'achievements' && Array.isArray(v)) {
             out[toSnake(k)] = JSON.stringify(v);
         } else {
@@ -29,7 +27,9 @@ export const mapProfileToDb = (p: any) => {
 export const mapEventToDb = (e: any) => {
     if (!e || typeof e !== 'object') return e;
     const out: any = {};
-    Object.entries(e).forEach(([k, v]) => { out[toSnake(k)] = v; });
+    Object.entries(e).forEach(([k, v]) => {
+        out[toSnake(k)] = v;
+    });
     return cleanObject(out);
 };
 

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { INITIAL_EVENTS, INITIAL_HALL_OF_FAME, SEED_PROFILES } from '../constants';
+import { SEED_PROFILES, INITIAL_EVENTS, INITIAL_HALL_OF_FAME } from '../constants';
 import { mapProfileToDb, mapEventToDb, mapHallToDb } from '../utils/supabaseUtils';
 
 // Sub-components
@@ -57,7 +57,7 @@ const AdminDashboard: React.FC<Props> = ({
       alert("System Initialized. Refreshing data...");
       window.location.reload();
     } catch (err: any) {
-      alert(`Seed failed: ${err.message}`);
+      alert(`Seed failed: ${err.message || String(err)}`);
     } finally {
       setIsSyncing(false);
     }
