@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Profile } from '../../types';
 import { Scan, Terminal, ShieldAlert, Check, Keyboard, Activity, UserCheck, Crosshair, Flashlight } from 'lucide-react';
@@ -39,7 +38,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
       .from('registrations')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error loading registrations:', error);
     } else if (data) {
@@ -53,8 +52,8 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
 
     const start = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
         });
 
         if (!mounted) {
@@ -76,8 +75,8 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
             setIsScanning(true);
           };
         }
-      } catch (err) { 
-        console.error("Terminal Error: Camera access denied.", err); 
+      } catch (err) {
+        console.error("Terminal Error: Camera access denied.", err);
         setScanMessage('Camera access denied. Allow camera permission.');
         setIsScanning(false);
       }
@@ -104,7 +103,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
     const scan = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
         const vw = video.videoWidth;
         const vh = video.videoHeight;
@@ -120,7 +119,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
             ctx.drawImage(video, 0, 0, vw, vh);
             const imageData = ctx.getImageData(0, 0, vw, vh);
             const code = decodeWithFallback(imageData);
-            
+
             if (code && code.data) {
               setScanMessage('Code detected');
               handleIdentify(code.data);
@@ -147,7 +146,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
   const handleIdentify = (data: string) => {
     const now = Date.now();
     const ident = data.trim().toUpperCase();
-    
+
     // Throttle: don't process same code twice within 4 seconds
     if (ident === lastIdentified.current && now - lastScanTime.current < 4000) return;
 
@@ -166,7 +165,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
         const rId = (r.id || "").trim().toUpperCase();
         return rReg === ident || rId === ident;
       });
-      
+
       // Create a profile-like object from registration for display
       if (registration) {
         profile = {
@@ -183,22 +182,22 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
       }
     }
 
-    const result = { 
-      profile, 
-      raw: ident, 
-      ts: new Date().toLocaleTimeString(), 
+    const result = {
+      profile,
+      raw: ident,
+      ts: new Date().toLocaleTimeString(),
       status: profile ? 'VALID' : 'INVALID',
       isRegistration: !!registration
     };
 
     setScanResult(result);
     setHistory(prev => [result, ...prev].slice(0, 15));
-    
+
     lastIdentified.current = ident;
     lastScanTime.current = now;
 
     if (profile) {
-      new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3').play().catch(() => {});
+      new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3').play().catch(() => { });
       if ('vibrate' in navigator) navigator.vibrate(200);
       setScanMessage('Validated');
     } else {
@@ -233,7 +232,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
             if (!track || !torchAvailable) return;
             const next = !torchOn;
             // Torch is non-standard; cast constraints to keep type-checker happy while targeting supported browsers
-            track.applyConstraints({ advanced: [{ torch: next }] } as unknown as MediaTrackConstraints).catch(() => {});
+            track.applyConstraints({ advanced: [{ torch: next }] } as unknown as MediaTrackConstraints).catch(() => { });
             setTorchOn(next);
           }}
           disabled={!torchAvailable}
@@ -251,6 +250,8 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
         <input
           ref={fileInputRef}
           type="file"
+          id="qr-image"
+          name="qr_image"
           accept="image/*"
           className="hidden"
           onChange={async (e) => {
@@ -290,7 +291,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
         <div className="relative aspect-square bg-[#01040f] rounded-[80px] overflow-hidden border border-white/10 shadow-2xl">
           <video ref={videoRef} muted autoPlay playsInline className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 opacity-30" />
           <canvas ref={canvasRef} className="hidden" />
-          
+
           {/* Scan Zone UI */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-80 h-80 border border-emerald-500/20 rounded-[48px] relative">
@@ -331,7 +332,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
           <div className="glass-card rounded-[56px] p-12 border-white/5 shadow-xl">
             <h3 className="text-xl font-black uppercase italic tracking-tighter mb-8 flex items-center gap-3 text-slate-400"><Keyboard size={20} /> Manual Validation</h3>
             <div className="flex gap-4">
-              <input type="text" value={manual} onChange={e => setManual(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && manual && handleIdentify(manual)} placeholder="REG NUMBER..." className="flex-grow bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white text-lg font-black tracking-[0.3em] outline-none focus:border-emerald-500 transition-all" />
+              <input id="manual-reg" name="manual_reg" type="text" value={manual} onChange={e => setManual(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && manual && handleIdentify(manual)} placeholder="REG NUMBER..." className="flex-grow bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white text-lg font-black tracking-[0.3em] outline-none focus:border-emerald-500 transition-all" autoComplete="off" />
               <button onClick={() => manual && handleIdentify(manual)} className="bg-emerald-500 text-black px-12 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-emerald-400 active:scale-95 transition-all">CHECK</button>
             </div>
           </div>
@@ -354,7 +355,7 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
                       <div className={`p-4 rounded-2xl border ${h.profile ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-red-500/10 text-red-500 border-red-500/10'}`}>{h.profile ? <UserCheck size={20} /> : <ShieldAlert size={20} />}</div>
                     </motion.div>
                   ))
-                )}
+                }
               </AnimatePresence>
             </div>
           </div>

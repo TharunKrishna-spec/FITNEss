@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Achievement, PodiumPosition } from '../../types';
 import { Edit2, Trash2, Trophy, Star, Crown, Plus, Image as ImageIcon } from 'lucide-react';
@@ -69,7 +68,7 @@ const ArchivesTab: React.FC<Props> = ({ hallOfFame, setHallOfFame }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {hallOfFame.sort((a,b) => b.year.localeCompare(a.year)).map(h => (
+        {hallOfFame.sort((a, b) => b.year.localeCompare(a.year)).map(h => (
           <div key={h.id} className="glass-card p-6 rounded-[32px] hover:bg-white/[0.03] transition-all border-white/5 flex flex-col group">
             <div className="aspect-square rounded-2xl overflow-hidden mb-6 relative">
               <img src={h.athleteImg} className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt="" />
@@ -77,7 +76,7 @@ const ArchivesTab: React.FC<Props> = ({ hallOfFame, setHallOfFame }) => {
                 <Crown size={16} />
               </div>
             </div>
-            
+
             <div className="flex-grow mb-6">
               <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500 mb-2">{h.position}</p>
               <p className="text-2xl font-black uppercase italic tracking-tighter mb-1">{h.athleteName}</p>
@@ -88,7 +87,7 @@ const ArchivesTab: React.FC<Props> = ({ hallOfFame, setHallOfFame }) => {
               <button onClick={() => setEditing(h)} className="flex-grow py-3 bg-white/5 rounded-xl hover:text-yellow-500 transition-colors text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
                 <Edit2 size={12} /> Edit Detail
               </button>
-              <button onClick={async () => { if(confirm('Purge record?')) { await supabase.from('hall_of_fame').delete().eq('id', h.id); setHallOfFame(hallOfFame.filter(x => x.id !== h.id)); } }} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+              <button onClick={async () => { if (confirm('Purge record?')) { await supabase.from('hall_of_fame').delete().eq('id', h.id); setHallOfFame(hallOfFame.filter(x => x.id !== h.id)); } }} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -107,38 +106,38 @@ const ArchivesTab: React.FC<Props> = ({ hallOfFame, setHallOfFame }) => {
             <form onSubmit={saveAchievement} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Athlete Name</label>
-                  <input name="athleteName" defaultValue={editing.athleteName} placeholder="NAME" className="admin-input" required />
+                  <label htmlFor="athleteName" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Athlete Name</label>
+                  <input id="athleteName" name="athleteName" defaultValue={editing?.athleteName} placeholder="NAME" className="admin-input" required autoComplete="name" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Division/Category</label>
-                  <input name="category" defaultValue={editing.category} placeholder="e.g. Under 85kg" className="admin-input" required />
+                  <label htmlFor="category" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Division/Category</label>
+                  <input id="category" name="category" defaultValue={editing?.category} placeholder="e.g. Under 85kg" className="admin-input" required autoComplete="off" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Event Source</label>
-                  <input name="eventName" defaultValue={editing.eventName} placeholder="e.g. Campus Clash 2023" className="admin-input" required />
+                  <label htmlFor="eventName" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Event Source</label>
+                  <input id="eventName" name="eventName" defaultValue={editing?.eventName} placeholder="e.g. Campus Clash 2023" className="admin-input" required autoComplete="off" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Year</label>
-                  <input name="year" defaultValue={editing.year} placeholder="2024" className="admin-input" required />
+                  <label htmlFor="year" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Year</label>
+                  <input id="year" name="year" defaultValue={editing?.year} placeholder="2024" className="admin-input" required autoComplete="year" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Podium Rank</label>
-                  <select name="position" defaultValue={editing.position} className="admin-input">
+                  <label htmlFor="position" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Podium Rank</label>
+                  <select id="position" name="position" defaultValue={editing?.position} className="admin-input" autoComplete="off">
                     {Object.values(PodiumPosition).map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Action Shot URL</label>
-                  <input name="athleteImg" defaultValue={editing.athleteImg} placeholder="https://..." className="admin-input" required />
+                  <label htmlFor="athleteImg" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Action Shot URL</label>
+                  <input id="athleteImg" name="athleteImg" defaultValue={editing?.athleteImg} placeholder="https://..." className="admin-input" required autoComplete="off" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Performance Stat</label>
-                  <input name="stat" defaultValue={editing.stat} placeholder="e.g. 540kg Total" className="admin-input" />
+                  <label htmlFor="stat" className="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-4 tracking-widest">Performance Stat</label>
+                  <input id="stat" name="stat" defaultValue={editing?.stat} placeholder="e.g. 540kg Total" className="admin-input" autoComplete="off" />
                 </div>
                 <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <input type="checkbox" name="featured" defaultChecked={editing.featured} className="w-5 h-5 rounded" />
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Pin to Champions Wall</label>
+                  <input id="featured" type="checkbox" name="featured" defaultChecked={editing?.featured} className="w-5 h-5 rounded" />
+                  <label htmlFor="featured" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Pin to Champions Wall</label>
                 </div>
               </div>
               <button className="w-full py-6 bg-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl">Commit Archive</button>

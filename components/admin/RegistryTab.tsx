@@ -123,10 +123,13 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
             <input
+              id="registry-search"
+              name="registry_search"
               type="text"
               placeholder="SEARCH BY NAME OR REG NUMBER..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
               className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 text-sm font-medium focus:outline-none focus:border-emerald-500 transition-all"
             />
           </div>
@@ -171,14 +174,18 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
               </h3>
               <form onSubmit={saveRegistration} className="space-y-5">
                 <input
+                  id="reg-add-name"
                   name="name"
                   placeholder="FULL NAME"
+                  autoComplete="name"
                   className="admin-input"
                   required
                 />
                 <input
+                  id="reg-add-number"
                   name="reg_number"
                   placeholder="REGISTRATION NUMBER"
+                  autoComplete="off"
                   className="admin-input"
                   required
                 />
@@ -234,13 +241,13 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
             <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-10">Personnel Editor</h3>
             <form onSubmit={saveProfile} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                <input name="name" defaultValue={editing.name} placeholder="NAME" className="admin-input col-span-2" required />
-                <input name="position" defaultValue={editing.position} placeholder="POSITION" className="admin-input" required />
-                <input name="reg_no" defaultValue={editing.reg_no} placeholder="REG NO" className="admin-input" />
-                <input name="photo" defaultValue={editing.photo} placeholder="PHOTO URL" className="admin-input col-span-2" required />
-                <textarea name="bio" defaultValue={editing.bio} placeholder="BIOGRAPHY" className="admin-input col-span-2 h-32" required />
-                <input name="order_index" type="number" defaultValue={editing.order_index} placeholder="ORDER INDEX" className="admin-input" />
-                <select name="role" defaultValue={editing.role} className="admin-input">
+                <input id="profile-name" name="name" defaultValue={editing?.name} placeholder="NAME" className="admin-input col-span-2" required autoComplete="name" />
+                <input id="profile-position" name="position" defaultValue={editing?.position} placeholder="POSITION" className="admin-input" required autoComplete="organization-title" />
+                <input id="profile-regno" name="reg_no" defaultValue={editing?.reg_no} placeholder="REG NO" className="admin-input" autoComplete="off" />
+                <input id="profile-photo" name="photo" defaultValue={editing?.photo} placeholder="PHOTO URL" className="admin-input col-span-2" required autoComplete="off" />
+                <textarea id="profile-bio" name="bio" defaultValue={editing?.bio} placeholder="BIOGRAPHY" className="admin-input col-span-2 h-32" required autoComplete="off" />
+                <input id="profile-order" name="order_index" type="number" defaultValue={editing?.order_index} placeholder="ORDER INDEX" className="admin-input" autoComplete="off" />
+                <select id="profile-role" name="role" defaultValue={editing?.role} className="admin-input" autoComplete="off">
                   {Object.values(Role).map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
