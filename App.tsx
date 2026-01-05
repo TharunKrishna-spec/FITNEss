@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
@@ -125,8 +124,8 @@ const NavLink = ({ to, state, children, icon: Icon, onClick, scrolled, index }: 
         state={state}
         onClick={onClick}
         className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${isActive
-            ? 'text-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+          ? 'text-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+          : 'text-slate-400 hover:text-white hover:bg-white/5'
           }`}
       >
         {Icon && <Icon size={14} />}
@@ -401,8 +400,9 @@ const App: React.FC = () => {
           supabase.from('site_config').select('*')
         ]);
         if (p?.length) {
-          // Skip loading from database - use INITIAL_PROFILES from constants instead
-          // setProfiles(p);
+          // Load profiles from DB when present
+          setProfiles(p);
+          console.debug('Loaded profiles from Supabase:', p);
         }
         if (e?.length) setEvents(e);
         if (h?.length) {
@@ -427,6 +427,74 @@ const App: React.FC = () => {
       } catch (err) { console.warn("Offline."); } finally { setTimeout(() => setIsLoading(false), 800); }
     };
     initApp();
+  }, []);
+
+  // Realtime subscriptions so DB changes reflect in the UI immediately
+  useEffect(() => {
+    // profiles
+    const profilesChan = supabase
+      .channel('public:profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+        const t = payload.eventType;
+        if (t === 'INSERT') setProfiles(prev => [...prev, payload.new]);
+        else if (t === 'UPDATE') setProfiles(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
+        else if (t === 'DELETE') setProfiles(prev => prev.filter(p => p.id !== payload.old.id));
+      })
+      .subscribe();
+
+    // events
+    const eventsChan = supabase
+      .channel('public:events')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
+        const t = payload.eventType;
+        if (t === 'INSERT') setEvents(prev => [...prev, payload.new]);
+        else if (t === 'UPDATE') setEvents(prev => prev.map(e => (e.id === payload.new.id ? payload.new : e)));
+        else if (t === 'DELETE') setEvents(prev => prev.filter(e => e.id !== payload.old.id));
+      })
+      .subscribe();
+
+    // hall_of_fame (map DB snake_case to camelCase)
+    const hofChan = supabase
+      .channel('public:hall_of_fame')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hall_of_fame' }, (payload) => {
+        const mapRec = (rec: any) => ({
+          id: rec.id,
+          athleteName: rec.athlete_name,
+          category: rec.category,
+          eventName: rec.event_name,
+          year: rec.year,
+          position: rec.position,
+          athleteImg: rec.athlete_img,
+          stat: rec.stat,
+          featured: rec.featured
+        });
+        const t = payload.eventType;
+        if (t === 'INSERT') setHallOfFame(prev => [...prev, mapRec(payload.new)]);
+        else if (t === 'UPDATE') setHallOfFame(prev => prev.map(h => (h.id === payload.new.id ? mapRec(payload.new) : h)));
+        else if (t === 'DELETE') setHallOfFame(prev => prev.filter(h => h.id !== payload.old.id));
+      })
+      .subscribe();
+
+    // site_config changes -> refetch config on changes
+    const configChan = supabase
+      .channel('public:site_config')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, async () => {
+        const { data: c } = await supabase.from('site_config').select('*');
+        if (c?.length) {
+          const configMap: Record<string, string> = {};
+          c.forEach((item: any) => { configMap[item.key] = item.value; });
+          setSiteConfig(prev => ({ ...prev, ...configMap }));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      // cleanup subscriptions
+      try { profilesChan.unsubscribe(); } catch { }
+      try { eventsChan.unsubscribe(); } catch { }
+      try { hofChan.unsubscribe(); } catch { }
+      try { configChan.unsubscribe(); } catch { }
+    };
   }, []);
 
   const handleLogout = async () => {
