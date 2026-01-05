@@ -46,24 +46,22 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
-    const id = editing.id || generateId();
 
-    const payloadUi = {
-      ...editing,
+    // Defensive: editing may be null/undefined, avoid Object.entries on it
+    const id = editing?.id || generateId();
+    const base = editing || {};
+
+    const payload = {
+      ...base,
       ...data,
       id,
-      order_index: Number(data.order_index) || 0
+      order_index: Number((data as any).order_index) || 0
     };
 
-    // Map to DB shape (socials will be a JSON object)
-    const payloadDb = mapProfileToDb(payloadUi);
-
-    const { error } = await supabase.from('profiles').upsert(payloadDb);
+    const { error } = await supabase.from('profiles').upsert(payload);
     if (!error) {
-      setProfiles(editing.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
+      setProfiles(editing?.id ? profiles.map(p => p.id === id ? payload as Profile : p) : [...profiles, payload as Profile]);
       setEditing(null);
-    } else {
-      alert('Failed to save: ' + error.message);
     }
   };
 
