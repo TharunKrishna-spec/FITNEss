@@ -364,7 +364,7 @@ const IDModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 };
 
 const App: React.FC = () => {
-  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
+ const [profiles, setProfiles] = useState<Profile[]>([]);
   const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS);
   const [hallOfFame, setHallOfFame] = useState<Achievement[]>(INITIAL_HALL_OF_FAME);
   const [siteConfig, setSiteConfig] = useState<Record<string, string>>({
@@ -400,10 +400,12 @@ const App: React.FC = () => {
           supabase.from('hall_of_fame').select('id, athlete_name, category, event_name, year, position, athlete_img, stat, featured'),
           supabase.from('site_config').select('*')
         ]);
-        if (p?.length) {
-          // Skip loading from database - use INITIAL_PROFILES from constants instead
-          // setProfiles(p);
-        }
+        if (p && p.length > 0) {
+                        setProfiles(p);
+                      } else {
+                        setProfiles(INITIAL_PROFILES); // fallback only if DB empty
+                      }
+
         if (e?.length) setEvents(e);
         if (h?.length) {
           const mapped = h.map((rec: any) => ({
