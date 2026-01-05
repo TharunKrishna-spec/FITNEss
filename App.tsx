@@ -399,29 +399,41 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const initApp = async () => {
+    let mounted = true;
+
+    const loadAllData = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user?.email || null);
-        const [{ data: p }, { data: e }, { data: h }, { data: c }] = await Promise.all([
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setUser(sessionData?.session?.user?.email || null);
+
+        const [pRes, eRes, hRes, cRes] = await Promise.all([
           supabase.from('profiles').select('*'),
           supabase.from('events').select('*'),
           supabase.from('hall_of_fame').select('id, athlete_name, category, event_name, year, position, athlete_img, stat, featured'),
           supabase.from('site_config').select('*')
         ]);
-        if (p?.length) {
-          // Map DB snake_case -> camelCase and set
-          const mappedProfiles = p.map(mapKeysToCamel);
+
+        // profiles
+        if (pRes.error) console.warn('profiles fetch error', pRes.error);
+        if (pRes.data && pRes.data.length) {
+          const mappedProfiles = pRes.data.map(mapKeysToCamel);
           setProfiles(mappedProfiles);
           console.debug('Loaded profiles from Supabase (mapped):', mappedProfiles);
+        } else {
+          // fallback to initial data when DB empty
+          setProfiles(INITIAL_PROFILES);
         }
-        if (e?.length) {
-          // map events too (defensive)
-          const mappedEvents = e.map(mapKeysToCamel);
-          setEvents(mappedEvents);
-        }
-        if (h?.length) {
-          const mapped = h.map((rec: any) => ({
+
+        // events
+        if (eRes.error) console.warn('events fetch error', eRes.error);
+        if (eRes.data && eRes.data.length) setEvents(eRes.data.map(mapKeysToCamel));
+        else setEvents(INITIAL_EVENTS);
+
+        // hall of fame
+        if (hRes.error) console.warn('hall_of_fame fetch error', hRes.error);
+        if (hRes.data && hRes.data.length) {
+          const mapped = hRes.data.map((rec: any) => ({
             id: rec.id,
             athleteName: rec.athlete_name,
             category: rec.category,
@@ -433,165 +445,274 @@ const App: React.FC = () => {
             featured: rec.featured
           }));
           setHallOfFame(mapped);
+        } else {
+          setHallOfFame(INITIAL_HALL_OF_FAME);
         }
-        if (c?.length) {
+
+        // site config
+        if (cRes.error) console.warn('site_config fetch error', cRes.error);
+        if (cRes.data && cRes.data.length) {
           const configMap: Record<string, string> = {};
-          c.forEach(item => { configMap[item.key] = item.value; });
+          cRes.data.forEach((item: any) => { configMap[item.key] = item.value; });
           setSiteConfig(prev => ({ ...prev, ...configMap }));
         }
-      } catch (err) { console.warn("Offline."); } finally { setTimeout(() => setIsLoading(false), 800); }
+      } catch (err) {
+        console.warn('Failed to load data', err);
+      } finally {
+        setTimeout(() => setIsLoading(false), 800);
+      }
     };
-    initApp();
+
+    loadAllData();
+
+    return () => { mounted = false; };
+  }, []);
+
+  // keep auth state current (persists user across refresh/login/logout)
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user?.email || null);
+    });
+    return () => authListener?.subscription?.unsubscribe?.();
   }, []);
 
   // Realtime subscriptions so DB changes reflect in the UI immediately
   useEffect(() => {
-    // profiles
-    const profilesChan = supabase
-      .channel('public:profiles')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
-        const t = payload.eventType;
-        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
-        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
-        if (t === 'INSERT' && newRec) {
-          setProfiles(prev => {
-            // dedupe if exists
-            if (prev.some(p => p.id === newRec.id)) return prev.map(p => (p.id === newRec.id ? newRec : p));
-            return [...prev, newRec];
-          });
-          console.debug('Profile INSERT applied:', newRec);
-        } else if (t === 'UPDATE' && newRec) {
-          setProfiles(prev => prev.map(p => (p.id === newRec.id ? newRec : p)));
-          console.debug('Profile UPDATE applied:', newRec);
-        } else if (t === 'DELETE' && oldRec) {
-          setProfiles(prev => prev.filter(p => p.id !== oldRec.id));
-          console.debug('Profile DELETE applied:', oldRec);
-        }
-      })
-      .subscribe();
+    -    // profiles
+      -    const profilesChan = supabase
+        -      .channel('public:profiles')
+        -      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+          -        const t = payload.eventType;
+          -        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
+          -        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
+          -        if (t === 'INSERT' && newRec) {
+            -          setProfiles(prev => {
+              -            // dedupe if exists
+                -            if (prev.some(p => p.id === newRec.id)) return prev.map(p => (p.id === newRec.id ? newRec : p));
+              -            return [...prev, newRec];
+              -          });
+            -          console.debug('Profile INSERT applied:', newRec);
+            -        } else if (t === 'UPDATE' && newRec) {
+              -          setProfiles(prev => prev.map(p => (p.id === newRec.id ? newRec : p)));
+              -          console.debug('Profile UPDATE applied:', newRec);
+              -        } else if (t === 'DELETE' && oldRec) {
+                -          setProfiles(prev => prev.filter(p => p.id !== oldRec.id));
+                -          console.debug('Profile DELETE applied:', oldRec);
+                -        }
+          -      })
+        -      .subscribe();
+    +    // profiles
+      +    const profilesChan = supabase.channel('public:profiles')
+        +      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+          +        const t = payload.eventType;
+          +        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
+          +        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
+          +        if (t === 'INSERT' && newRec) {
+            +          setProfiles(prev => {
+              +            if (prev.some(p => p.id === newRec.id)) return prev.map(p => (p.id === newRec.id ? newRec : p));
+              +            return [...prev, newRec];
+              +          });
+            +          console.debug('Profile INSERT applied:', newRec);
+            +        } else if (t === 'UPDATE' && newRec) {
+              +          setProfiles(prev => prev.map(p => (p.id === newRec.id ? newRec : p)));
+              +          console.debug('Profile UPDATE applied:', newRec);
+              +        } else if (t === 'DELETE' && oldRec) {
+                +          setProfiles(prev => prev.filter(p => p.id !== oldRec.id));
+                +          console.debug('Profile DELETE applied:', oldRec);
+                +        }
+          +      });
+    +    profilesChan.subscribe();
 
-    // events
-    const eventsChan = supabase
-      .channel('public:events')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
-        const t = payload.eventType;
-        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
-        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
-        if (t === 'INSERT' && newRec) {
-          setEvents(prev => (prev.some(x => x.id === newRec.id) ? prev.map(x => (x.id === newRec.id ? newRec : x)) : [...prev, newRec]));
-          console.debug('Event INSERT applied:', newRec);
-        } else if (t === 'UPDATE' && newRec) {
-          setEvents(prev => prev.map(e => (e.id === newRec.id ? newRec : e)));
-          console.debug('Event UPDATE applied:', newRec);
-        } else if (t === 'DELETE' && oldRec) {
-          setEvents(prev => prev.filter(e => e.id !== oldRec.id));
-          console.debug('Event DELETE applied:', oldRec);
-        }
-      })
-      .subscribe();
+    -    // events
+      -    const eventsChan = supabase
+        -      .channel('public:events')
+        -      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
+          -        const t = payload.eventType;
+          -        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
+          -        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
+          -        if (t === 'INSERT' && newRec) {
+            -          setEvents(prev => (prev.some(x => x.id === newRec.id) ? prev.map(x => (x.id === newRec.id ? newRec : x)) : [...prev, newRec]));
+            -          console.debug('Event INSERT applied:', newRec);
+            -        } else if (t === 'UPDATE' && newRec) {
+              -          setEvents(prev => prev.map(e => (e.id === newRec.id ? newRec : e)));
+              -          console.debug('Event UPDATE applied:', newRec);
+              -        } else if (t === 'DELETE' && oldRec) {
+                -          setEvents(prev => prev.filter(e => e.id !== oldRec.id));
+                -          console.debug('Event DELETE applied:', oldRec);
+                -        }
+          -      })
+        -      .subscribe();
+    +    // events
+      +    const eventsChan = supabase.channel('public:events')
+        +      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
+          +        const t = payload.eventType;
+          +        const newRec = payload.new ? mapKeysToCamel(payload.new) : null;
+          +        const oldRec = payload.old ? mapKeysToCamel(payload.old) : null;
+          +        if (t === 'INSERT' && newRec) {
+            +          setEvents(prev => (prev.some(x => x.id === newRec.id) ? prev.map(x => (x.id === newRec.id ? newRec : x)) : [...prev, newRec]));
+            +          console.debug('Event INSERT applied:', newRec);
+            +        } else if (t === 'UPDATE' && newRec) {
+              +          setEvents(prev => prev.map(e => (e.id === newRec.id ? newRec : e)));
+              +          console.debug('Event UPDATE applied:', newRec);
+              +        } else if (t === 'DELETE' && oldRec) {
+                +          setEvents(prev => prev.filter(e => e.id !== oldRec.id));
+                +          console.debug('Event DELETE applied:', oldRec);
+                +        }
+          +      });
+    +    eventsChan.subscribe();
 
-    // hall_of_fame (map DB snake_case to camelCase)
-    const hofChan = supabase
-      .channel('public:hall_of_fame')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'hall_of_fame' }, (payload) => {
-        const mapRec = (rec: any) => ({
-          id: rec.id,
-          athleteName: rec.athlete_name,
-          category: rec.category,
-          eventName: rec.event_name,
-          year: rec.year,
-          position: rec.position,
-          athleteImg: rec.athlete_img,
-          stat: rec.stat,
-          featured: rec.featured
-        });
-        const t = payload.eventType;
-        if (t === 'INSERT') {
-          const r = mapRec(payload.new);
-          setHallOfFame(prev => (prev.some(x => x.id === r.id) ? prev.map(x => (x.id === r.id ? r : x)) : [...prev, r]));
-          console.debug('HOF INSERT:', r);
-        } else if (t === 'UPDATE') {
-          const r = mapRec(payload.new);
-          setHallOfFame(prev => prev.map(h => (h.id === r.id ? r : h)));
-          console.debug('HOF UPDATE:', r);
-        } else if (t === 'DELETE') {
-          setHallOfFame(prev => prev.filter(h => h.id !== payload.old.id));
-          console.debug('HOF DELETE:', payload.old);
-        }
-      })
-      .subscribe();
+    -    // hall_of_fame (map DB snake_case to camelCase)
+      -    const hofChan = supabase
+        -      .channel('public:hall_of_fame')
+        -      .on('postgres_changes', { event: '*', schema: 'public', table: 'hall_of_fame' }, (payload) => {
+          -        const mapRec = (rec: any) => ({
+- id: rec.id,
+          -          athleteName: rec.athlete_name,
+            -          category: rec.category,
+              -          eventName: rec.event_name,
+                -          year: rec.year,
+                  -          position: rec.position,
+                    -          athleteImg: rec.athlete_img,
+                      -          stat: rec.stat,
+                        -          featured: rec.featured
+                          -        });
+    -        const t = payload.eventType;
+    -        if (t === 'INSERT') {
+      -          const r = mapRec(payload.new);
+      -          setHallOfFame(prev => (prev.some(x => x.id === r.id) ? prev.map(x => (x.id === r.id ? r : x)) : [...prev, r]));
+      -          console.debug('HOF INSERT:', r);
+      -        } else if (t === 'UPDATE') {
+        -          const r = mapRec(payload.new);
+        -          setHallOfFame(prev => prev.map(h => (h.id === r.id ? r : h)));
+        -          console.debug('HOF UPDATE:', r);
+        -        } else if (t === 'DELETE') {
+          -          setHallOfFame(prev => prev.filter(h => h.id !== payload.old.id));
+          -          console.debug('HOF DELETE:', payload.old);
+          -        }
+    -      })
+    -      .subscribe();
+  +    // hall_of_fame (map DB snake_case to camelCase)
+    +    const hofChan = supabase.channel('public:hall_of_fame')
+      +      .on('postgres_changes', { event: '*', schema: 'public', table: 'hall_of_fame' }, (payload) => {
+        +        const mapRec = (rec: any) => ({
++ id: rec.id,
+        +          athleteName: rec.athlete_name,
+          +          category: rec.category,
+            +          eventName: rec.event_name,
+              +          year: rec.year,
+                +          position: rec.position,
+                  +          athleteImg: rec.athlete_img,
+                    +          stat: rec.stat,
+                      +          featured: rec.featured
+                        +        });
+  +        const t = payload.eventType;
+  +        if (t === 'INSERT') {
+    +          const r = mapRec(payload.new);
+    +          setHallOfFame(prev => (prev.some(x => x.id === r.id) ? prev.map(x => (x.id === r.id ? r : x)) : [...prev, r]));
+    +          console.debug('HOF INSERT:', r);
+    +        } else if (t === 'UPDATE') {
+      +          const r = mapRec(payload.new);
+      +          setHallOfFame(prev => prev.map(h => (h.id === r.id ? r : h)));
+      +          console.debug('HOF UPDATE:', r);
+      +        } else if (t === 'DELETE') {
+        +          setHallOfFame(prev => prev.filter(h => h.id !== payload.old.id));
+        +          console.debug('HOF DELETE:', payload.old);
+        +        }
+  +      });
++    hofChan.subscribe();
 
-    // site_config changes -> refetch config on changes
-    const configChan = supabase
-      .channel('public:site_config')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, async () => {
-        const { data: c } = await supabase.from('site_config').select('*');
-        if (c?.length) {
-          const configMap: Record<string, string> = {};
-          c.forEach((item: any) => { configMap[item.key] = item.value; });
-          setSiteConfig(prev => ({ ...prev, ...configMap }));
-        }
-      })
-      .subscribe();
+-    // site_config changes -> refetch config on changes
+  -    const configChan = supabase
+    -      .channel('public:site_config')
+    -      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, async () => {
+      -        const { data: c } = await supabase.from('site_config').select('*');
+      -        if (c?.length) {
+        -          const configMap: Record<string, string> = {};
+        -          c.forEach((item: any) => { configMap[item.key] = item.value; });
+        -          setSiteConfig(prev => ({ ...prev, ...configMap }));
+        -        }
+      -      })
+    -      .subscribe();
++    // site_config changes -> refetch config on changes (keep simple)
+  +    const configChan = supabase.channel('public:site_config')
+    +      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, async () => {
+      +        try {
+        +          const { data: c, error } = await supabase.from('site_config').select('*');
+        +          if (error) return console.warn('site_config re-fetch error', error);
+        +          if (c?.length) {
+          +            const configMap: Record<string, string> = {};
+          +            c.forEach((item: any) => { configMap[item.key] = item.value; });
+          +            setSiteConfig(prev => ({ ...prev, ...configMap }));
+          +            console.debug('site_config updated from realtime event');
+          +          }
+        +        } catch (err) {
+          +          console.warn('site_config refetch failed', err);
+          +        }
+      +      });
++    configChan.subscribe();
 
-    return () => {
-      // cleanup subscriptions
-      try { profilesChan.unsubscribe(); } catch { }
-      try { eventsChan.unsubscribe(); } catch { }
-      try { hofChan.unsubscribe(); } catch { }
-      try { configChan.unsubscribe(); } catch { }
-    };
-  }, []);
+return () => {
+  // cleanup subscriptions
+  -      try { profilesChan.unsubscribe(); } catch { }
+  -      try { eventsChan.unsubscribe(); } catch { }
+  -      try { hofChan.unsubscribe(); } catch { }
+  -      try { configChan.unsubscribe(); } catch { }
+  +      try { profilesChan.unsubscribe(); } catch { }
+  +      try { eventsChan.unsubscribe(); } catch { }
+  +      try { hofChan.unsubscribe(); } catch { }
+  +      try { configChan.unsubscribe(); } catch { }
+};
+   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn('Logout failed', err);
-    } finally {
-      setUser(null);
-    }
-  };
+const handleLogout = async () => {
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn('Logout failed', err);
+  } finally {
+    setUser(null);
+  }
+};
 
-  return (
-    <ErrorBoundary>
-      <HashRouter>
-        <ScrollToTop />
-        <BackToTop />
-        <div className="min-h-screen flex flex-col bg-[#020617] text-slate-50">
-          <AnimatePresence>
-            {isLoading ? (
-              <motion.div exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#020617] flex items-center justify-center">
-                <Zap className="text-emerald-500 animate-pulse" size={48} />
-              </motion.div>
-            ) : (
-              <div className="flex flex-col min-h-screen relative">
-                <Header scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} user={user} openIDModal={() => setIsIDModalOpen(true)} onLogout={handleLogout} />
-                <IDModal isOpen={isIDModalOpen} onClose={() => setIsIDModalOpen(false)} />
-                <main className="flex-grow">
-                  <Routes>
-                    <Route path="/" element={<LandingPage events={events} hallOfFame={hallOfFame} config={siteConfig} profiles={profiles} />} />
-                    <Route path="/team" element={<BoardMembersPage profiles={profiles} config={siteConfig} />} />
-                    <Route path="/timeline" element={<TimelinePage events={events} config={siteConfig} />} />
-                    <Route path="/hall-of-fame" element={<HallOfFamePage hallOfFame={hallOfFame} config={siteConfig} />} />
-                    <Route path="/join" element={<JoinPage config={siteConfig} profiles={profiles} />} />
-                    <Route path="/contact" element={<ContactPage config={siteConfig} />} />
-                    <Route path="/calculator" element={<CalculatorPage />} />
-                    <Route path="/login" element={<LoginPage onLogin={(email) => setUser(email)} />} />
-                    <Route path="/admin" element={user ? <AdminDashboard profiles={profiles} setProfiles={setProfiles} events={events} setEvents={setEvents} hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <Navigate to="/login" />} />
-                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                    <Route path="/terms" element={<TermsOfServicePage />} />
-                    <Route path="*" element={<Navigate to="/" />} />
-                  </Routes>
-                </main>
-                <Footer user={user} config={siteConfig} />
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-      </HashRouter>
-    </ErrorBoundary>
-  );
+return (
+  <ErrorBoundary>
+    <HashRouter>
+      <ScrollToTop />
+      <BackToTop />
+      <div className="min-h-screen flex flex-col bg-[#020617] text-slate-50">
+        <AnimatePresence>
+          {isLoading ? (
+            <motion.div exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#020617] flex items-center justify-center">
+              <Zap className="text-emerald-500 animate-pulse" size={48} />
+            </motion.div>
+          ) : (
+            <div className="flex flex-col min-h-screen relative">
+              <Header scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} user={user} openIDModal={() => setIsIDModalOpen(true)} onLogout={handleLogout} />
+              <IDModal isOpen={isIDModalOpen} onClose={() => setIsIDModalOpen(false)} />
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<LandingPage events={events} hallOfFame={hallOfFame} config={siteConfig} profiles={profiles} />} />
+                  <Route path="/team" element={<BoardMembersPage profiles={profiles} config={siteConfig} />} />
+                  <Route path="/timeline" element={<TimelinePage events={events} config={siteConfig} />} />
+                  <Route path="/hall-of-fame" element={<HallOfFamePage hallOfFame={hallOfFame} config={siteConfig} />} />
+                  <Route path="/join" element={<JoinPage config={siteConfig} profiles={profiles} />} />
+                  <Route path="/contact" element={<ContactPage config={siteConfig} />} />
+                  <Route path="/calculator" element={<CalculatorPage />} />
+                  <Route path="/login" element={<LoginPage onLogin={(email) => setUser(email)} />} />
+                  <Route path="/admin" element={user ? <AdminDashboard profiles={profiles} setProfiles={setProfiles} events={events} setEvents={setEvents} hallOfFame={hallOfFame} setHallOfFame={setHallOfFame} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <Navigate to="/login" />} />
+                  <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                  <Route path="/terms" element={<TermsOfServicePage />} />
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </main>
+              <Footer user={user} config={siteConfig} />
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </HashRouter>
+  </ErrorBoundary>
+);
 };
 
 export default App;
