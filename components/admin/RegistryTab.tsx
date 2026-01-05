@@ -64,29 +64,31 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
     try {
       // Try the normal upsert first
       const res = await supabase.from('profiles').upsert([payloadDb]).select();
+      console.debug('Upsert attempt', { payloadDb, res });
+
       if (res.error) {
         const msg = (res.error.message || '').toLowerCase();
         // If DB complains about missing columns (e.g., 'instagram' or 'linkedin'), retry without socials
         if (msg.includes('could not find') || msg.includes('column') || msg.includes('unknown column')) {
           const { socials, ...withoutSocials } = payloadDb;
           const retry = await supabase.from('profiles').upsert([withoutSocials]).select();
+          console.debug('Retry upsert without socials', { withoutSocials, retry });
           if (retry.error) {
-            setSaveError(retry.error.message || 'Failed to save profile');
+            setSaveError(retry.error.message || JSON.stringify(retry.error));
             console.error('RegistryTab upsert retry error', retry.error);
           } else {
-            // success on retry
             setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
             setEditing(null);
           }
-        } else {
-          setSaveError(res.error.message || 'Failed to save profile');
-          console.error('RegistryTab upsert error', res.error);
+          return;
         }
-      } else {
-        // success
-        setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
-        setEditing(null);
+        setSaveError(res.error.message || JSON.stringify(res.error));
+        console.error('RegistryTab upsert error', res.error);
+        return;
       }
+      // success
+      setProfiles(editing?.id ? profiles.map(p => p.id === id ? payloadUi as Profile : p) : [...profiles, payloadUi as Profile]);
+      setEditing(null);
     } catch (err: any) {
       console.error('Unexpected save profile error', err);
       setSaveError(err?.message || String(err));
@@ -197,40 +199,23 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
         {addingRegistration && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
             <div className="absolute inset-0 bg-slate-950/98 backdrop-blur-3xl" onClick={() => setAddingRegistration(false)} />
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full max-w-md glass-card rounded-[32px] p-10 border-white/10 shadow-2xl">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative w-full max-w-md glass-card rounded-[32px] p-10 border-white/10 shadow-2xl"
+            >
               <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-8 flex items-center space-x-3">
                 <QrCode className="text-emerald-500" size={24} />
                 <span>Add Registration</span>
               </h3>
               <form onSubmit={saveRegistration} className="space-y-5">
-                <input
-                  id="reg-add-name"
-                  name="name"
-                  placeholder="FULL NAME"
-                  autoComplete="name"
-                  className="admin-input"
-                  required
-                />
-                <input
-                  id="reg-add-number"
-                  name="reg_number"
-                  placeholder="REGISTRATION NUMBER"
-                  autoComplete="off"
-                  className="admin-input"
-                  required
-                />
+                <input name="name" placeholder="FULL NAME" className="admin-input" required />
+                <input name="reg_number" placeholder="REGISTRATION NUMBER" className="admin-input" required />
                 <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setAddingRegistration(false)}
-                    className="flex-1 py-4 bg-white/5 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all"
-                  >
+                  <button type="button" onClick={() => setAddingRegistration(false)} className="flex-1 py-4 bg-white/5 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10">
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-4 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg"
-                  >
+                  <button type="submit" className="flex-1 py-4 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg">
                     Add
                   </button>
                 </div>
@@ -284,7 +269,7 @@ const RegistryTab: React.FC<Props> = ({ profiles, setProfiles }) => {
               <button className="w-full py-6 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-widest text-[11px]" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Commit Changes'}
               </button>
-              {saveError && <p className="text-sm text-red-400 mt-2">{saveError}</p>}
+              {saveError && <pre className="mt-3 text-sm text-red-400 whitespace-pre-wrap">{String(saveError)}</pre>}
             </form>
           </motion.div>
         </div>

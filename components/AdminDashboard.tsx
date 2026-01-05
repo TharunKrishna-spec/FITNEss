@@ -76,6 +76,25 @@ const AdminDashboard: React.FC<Props> = ({
     }
   };
 
+  // Quick test: attempt a minimal insert to check if backend accepts writes
+  const testWrite = async () => {
+    try {
+      const id = crypto.randomUUID();
+      const payload = { id, name: `TEST_WRITE_${new Date().toISOString()}` };
+      console.debug('Attempting test write payload:', payload);
+      const { data, error } = await supabase.from('profiles').insert([payload]).select();
+      console.debug('Test write response', { data, error });
+      if (error) {
+        alert(`Test write failed:\n${JSON.stringify(error)}`);
+      } else {
+        alert(`Test write succeeded: ${JSON.stringify(data)}`);
+      }
+    } catch (err: any) {
+      alert(`Test write exception: ${String(err)}`);
+      console.error('Test write exception', err);
+    }
+  };
+
   const SidebarBtn = ({ id, label, icon: Icon }: any) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -249,14 +268,23 @@ const AdminDashboard: React.FC<Props> = ({
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={seedDatabase}
-                    disabled={isSyncing}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white hover:border-emerald-500/50 transition-all"
-                  >
-                    {isSyncing ? <RefreshCw className="animate-spin" size={14} /> : <Database size={14} />}
-                    Seed System Data
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={seedDatabase}
+                      disabled={isSyncing}
+                      className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white hover:border-emerald-500/50 transition-all"
+                    >
+                      {isSyncing ? <RefreshCw className="animate-spin" size={14} /> : <Database size={14} />}
+                      Seed System Data
+                    </button>
+
+                    <button
+                      onClick={testWrite}
+                      className="ml-3 flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white hover:border-blue-500 transition-all"
+                    >
+                      Test Write
+                    </button>
+                  </div>
                 </div>
 
                 {isSystemEmpty && (

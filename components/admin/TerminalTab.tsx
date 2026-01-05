@@ -209,6 +209,49 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
     }, 5000);
   };
 
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsFileLoading(true);
+    try {
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Image load failed'));
+        img.src = URL.createObjectURL(file);
+      });
+
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setIsFileLoading(false);
+        setScanMessage('No canvas available');
+        return;
+      }
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) {
+        setIsFileLoading(false);
+        setScanMessage('Could not get canvas context');
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, img.width, img.height);
+      const code = jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
+      if (code?.data) {
+        setScanMessage('Code detected from image');
+        handleIdentify(code.data);
+      } else {
+        setScanMessage('No code found in image');
+      }
+    } catch (err) {
+      console.error('File decode error', err);
+      setScanMessage('Could not read image');
+    } finally {
+      setIsFileLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -250,39 +293,11 @@ const TerminalTab: React.FC<{ profiles: Profile[] }> = ({ profiles }) => {
         <input
           ref={fileInputRef}
           type="file"
+          accept="image/*"
           id="qr-image"
           name="qr_image"
-          accept="image/*"
           className="hidden"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            setIsFileLoading(true);
-            const img = new Image();
-            img.onload = () => {
-              const canvas = canvasRef.current;
-              if (!canvas) return;
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d', { willReadFrequently: true });
-              if (!ctx) return;
-              ctx.drawImage(img, 0, 0);
-              const data = ctx.getImageData(0, 0, img.width, img.height);
-              const code = jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
-              if (code?.data) {
-                setScanMessage('Code detected from image');
-                handleIdentify(code.data);
-              } else {
-                setScanMessage('No code found in image');
-              }
-              setIsFileLoading(false);
-            };
-            img.onerror = () => {
-              setIsFileLoading(false);
-              setScanMessage('Could not read image');
-            };
-            img.src = URL.createObjectURL(file);
-          }}
+          onChange={handleFileInputChange}
         />
         {scanMessage && <span className="text-xs text-slate-500">{scanMessage}{isFileLoading ? ' (processing...)' : ''}</span>}
       </div>
