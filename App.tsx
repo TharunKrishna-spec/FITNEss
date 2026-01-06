@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-ro
 import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Menu, X, Zap, ShieldCheck, LogOut, CreditCard, QrCode, Instagram, Linkedin, Mail, ShieldAlert, ArrowUp } from 'lucide-react';
 // no prefetched constants imported for runtime UI
-import { Event, Achievement } from './types';
+import { Event, Achievement, Profile } from './types';
 import { supabase } from './supabaseClient';
 
 // Error Boundary Component
@@ -220,11 +220,6 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogo
                 <span className="font-black tracking-tighter uppercase leading-none text-lg">FITNESS CLUB</span>
                 <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">VIT Chennai</span>
               </div>
-              <span className="text-[7px] font-black text-emerald-500 tracking-[0.4em] uppercase">
-                VIT Chennai
-              </span>
-            </div>
-
             </Link>
 
             <nav className="hidden lg:flex items-center space-x-1">
@@ -269,7 +264,7 @@ const Header = ({ scrolled, setIsMenuOpen, isMenuOpen, user, openIDModal, onLogo
   );
 };
 
-const Footer = ({ user, config }: { user: string | null; config?: Record<string, string> }) => (
+const Footer = ({ user, config }: { user: string | null; config?: Record<string, any> }) => (
   <footer className="bg-slate-950 border-t border-white/5 pt-20 pb-10 mt-auto">
     <div className="max-w-7xl mx-auto px-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
@@ -382,11 +377,73 @@ const mapKeysToCamel = (obj: any): any => {
   );
 };
 
+// NEW: parse site_config values into JSON/arrays when possible
+const parseConfigValue = (val: any) => {
+  if (val === null || val === undefined) return val;
+  if (typeof val === 'object') return val;
+  if (typeof val !== 'string') return val;
+  const s = val.trim();
+  try {
+    // handle JSON strings
+    return JSON.parse(s);
+  } catch {
+    // not JSON — try CSV-like lists
+    if (s.includes(',') && s.split(',').every(p => p.trim().length > 0)) {
+      return s.split(',').map(p => p.trim());
+    }
+    // fallback: original string
+    return s;
+  }
+};
+
+// NEW: ensure testimonials is always an array of objects { text, author? }
+const normalizeTestimonials = (t: any): Array<Record<string, any>> => {
+  if (!t) return [];
+  if (Array.isArray(t)) {
+    return t.map(item => {
+      if (typeof item === 'string') return { text: item };
+      if (typeof item === 'object' && item !== null) return item;
+      return { text: String(item) };
+    });
+  }
+  if (typeof t === 'string') {
+    const s = t.trim();
+    // try parse JSON array/object
+    try {
+      const parsed = JSON.parse(s);
+      return normalizeTestimonials(parsed);
+    } catch {
+      // split by newlines, pipes or commas (common formats)
+      const byLines = s.split(/\r?\n|\|/).map(x => x.trim()).filter(Boolean);
+      if (byLines.length > 1) return byLines.map(text => ({ text }));
+      if (s.includes(',')) return s.split(',').map(x => ({ text: x.trim() })).filter(Boolean);
+      return [{ text: s }];
+    }
+  }
+  if (typeof t === 'object') return [{ ...t }];
+  return [];
+};
+
+const normalizeSiteConfig = (cfg: Record<string, any>) => {
+  const copy = { ...cfg };
+  if ('testimonials' in copy) {
+    try {
+      copy.testimonials = normalizeTestimonials(copy.testimonials);
+    } catch (err) {
+      console.warn('Failed to normalize testimonials', err);
+      copy.testimonials = [];
+    }
+  }
+  // add other key-specific normalization here if needed
+  return copy;
+};
+
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [hallOfFame, setHallOfFame] = useState<Achievement[]>([]);
-  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({});
+  // change siteConfig state to allow parsed structures (arrays/objects)
+  const [siteConfig, setSiteConfig] = useState<Record<string, any>>({});
   const [user, setUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -449,9 +506,14 @@ const App: React.FC = () => {
         // site config
         if (cRes.error) console.warn('site_config fetch error', cRes.error);
         if (cRes.data && cRes.data.length) {
-          const configMap: Record<string, string> = {};
-          cRes.data.forEach((item: any) => { configMap[item.key] = item.value; });
-          setSiteConfig(configMap);
+          const configMap: Record<string, any> = {};
+          cRes.data.forEach((item: any) => {
+            configMap[item.key] = parseConfigValue(item.value);
+          });
+          // normalize known config shapes (testimonials => array of objects)
+          const normalized = normalizeSiteConfig(configMap);
+          setSiteConfig(normalized);
+          console.debug('Parsed site_config:', normalized);
         } else {
           setSiteConfig({});
         }
@@ -555,10 +617,12 @@ const App: React.FC = () => {
           const { data: c, error } = await supabase.from('site_config').select('*');
           if (error) return console.warn('site_config re-fetch error', error);
           if (c?.length) {
-            const configMap: Record<string, string> = {};
-            c.forEach((item: any) => { configMap[item.key] = item.value; });
-            setSiteConfig(prev => ({ ...prev, ...configMap }));
-            console.debug('site_config updated from realtime event');
+            const configMap: Record<string, any> = {};
+            c.forEach((item: any) => { configMap[item.key] = parseConfigValue(item.value); });
+            // replace with normalized config to keep known keys consistent
+            const normalized = normalizeSiteConfig(configMap);
+            setSiteConfig(prev => ({ ...prev, ...normalized }));
+            console.debug('site_config updated from realtime event (parsed & normalized)');
           }
         } catch (err) {
           console.warn('site_config refetch failed', err);
